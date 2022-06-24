@@ -1,0 +1,42 @@
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: ubuntu-mgmt
+spec:
+  config: '{
+    "cniVersion": "0.4.0",
+    "plugins": [{
+      "type": "macvlan",
+      "master": "enp11s0",
+      "mode": "bridge",
+      "capabilities": { "ips": true },
+      "ipam": { }
+    },
+    {
+      "type": "tuning",
+      "promisc": true,
+      "capbilities": { "mac": true }
+    }]
+  }'
+
+---
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: ubuntu-data
+spec:
+  config: '{
+    "cniVersion": "0.4.0",
+    "plugins": [{
+      "type": "macvlan",
+      "master": "enp11s0",
+      "mode": "bridge",
+      "capabilities": { "ips": true },
+      "ipam": { }
+    },
+    {
+      "type": "tuning",
+      "promisc": true,
+      "capbilities": { "mac": true }
+    }]
+  }'

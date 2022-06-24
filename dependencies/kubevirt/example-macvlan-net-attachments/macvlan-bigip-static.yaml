@@ -1,0 +1,97 @@
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: bigip-mgmt
+spec:
+  config: '{
+    "cniVersion": "0.4.0",
+     "plugins": [
+      {
+        "type": "macvlan",
+        "master": "enp11s0",
+        "mode": "bridge",
+        "capabilities": { "ips": true },
+        "ipam": {
+          "type": "static"
+        }
+      },
+      {
+        "type": "tuning",
+        "promisc": true,
+        "capabilities": { "mac": true }
+      }
+    ]
+  }'
+
+---
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: bigip-data10
+spec:
+  config: '{
+    "cniVersion": "0.4.0",
+    "plugins": [
+      {
+        "type": "macvlan",
+        "master": "enp11s0",
+        "mode": "bridge",
+        "capabilities": { "ips": true },
+        "ipam": {}
+      },
+      {
+        "type": "tuning",
+        "promisc": true,
+        "capabilities": { "mac": true }
+      }
+    ]
+  }'
+
+---
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: bigip-data20
+spec:
+  config: '{
+    "cniVersion": "0.4.0",
+    "plugins": [
+      {
+        "type": "macvlan",
+        "master": "enp11s0",
+        "mode": "bridge",
+        "capabilities": { "ips": true },
+        "ipam": {}
+      },
+      {
+        "type": "tuning",
+        "promisc": true,
+        "capabilities": { "mac": true }
+      }
+    ]
+  }'
+
+---
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: bigip-data30
+spec:
+  config: '{
+    "cniVersion": "0.4.0",
+    "plugins": [
+      {
+        "type": "macvlan",
+        "master": "enp11s0",
+        "mode": "bridge",
+        "capabilities": { "ips": true },
+        "ipam": {}
+      },
+      {
+        "type": "tuning",
+        "promisc": true,
+        "capabilities": { "mac": true }
+      }
+    ]
+  }'
+

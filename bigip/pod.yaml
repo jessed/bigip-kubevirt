@@ -1,0 +1,81 @@
+apiVersion: kubevirt.io/v1alpha3
+kind: VirtualMachineInstance
+metadata:
+  name: bigip-kv
+  annotations:
+    k8s.v1.cni.cncf.io/networks: '[
+      {"name": "bigip-mgmt", "ips": ["192.168.20.51/24"]},
+      {"name": "bigip-data10","ips": ["10.10.1.10/24"]},
+      {"name": "bigip-data20","ips": ["10.20.1.10/24"]},
+      {"name": "bigip-data30","ips": ["10.30.1.10/24"]}
+    ]'
+  labels:
+    app: bigip
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: macpro
+  domain:
+    cpu:
+      model: IvyBridge-IBRS
+    machine:
+      type: q35
+    resources:
+      requests:
+        memory: "4096Mi"
+        cpu: "2"
+    devices:
+      disks:
+      - name: containerdisk
+        disk:
+          bus: virtio
+      - name: cloudinitdisk
+        disk:
+          bus: virtio
+      - name: podinfo
+        disk:
+          bus: virtio
+      - name: networks
+        disk:
+          bus: virtio
+      interfaces:
+      - name: mgmt
+        bridge: {}
+      - name: data1
+        bridge: {}
+        macAddress: 40:00:00:00:00:02
+      - name: data2
+        bridge: {}
+        macAddress: 40:00:00:00:00:03
+      - name: data3
+        bridge: {}
+        macAddress: 40:00:00:00:00:01
+  volumes:
+  - name: containerdisk
+    containerDisk:
+      image: k83:5000/bigip-kv:base
+  - name: cloudinitdisk
+    cloudInitConfigDrive:
+      secretRef:
+        name: userdata
+  - name: podinfo
+    downwardAPI:
+      fields:
+      - path: annotations
+        fieldRef:
+          fieldPath: metadata.annotations
+  - name: networks
+    configMap:
+      name: bigip-kv
+  networks:
+  - name: mgmt
+    multus:
+      networkName: bigip-mgmt
+  - name: data1
+    multus:
+      networkName: bigip-data10
+  - name: data2
+    multus:
+      networkName: bigip-data20
+  - name: data3
+    multus:
+      networkName: bigip-data30

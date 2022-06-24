@@ -1,0 +1,18 @@
+apiVersion: networkaddonsoperator.network.kubevirt.io/v1
+kind: NetworkAddonsConfig
+metadata:
+  name: cluster
+spec:
+  placementConfiguration:
+    infra:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+    workloads:
+      nodeSelector:
+        node-role.kubernetes.io/worker: ""
+  macvtap: {}
