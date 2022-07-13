@@ -148,16 +148,16 @@ spec:
   networks:
   - name: mgmt
     multus:
-      networkName: bigip-mgmt
+      networkName: mgmt
   - name: data1
     multus:
-      networkName: bigip-data10
+      networkName: data10
   - name: data2
     multus:
-      networkName: bigip-data20
+      networkName: data20
   - name: data3
     multus:
-      networkName: bigip-data30
+      networkName: data30
 END
 
 

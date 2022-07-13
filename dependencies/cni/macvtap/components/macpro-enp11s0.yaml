@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: macvtap-macpro-enp11s0
+data:
+  DP_MACVTAP_CONF: |
+    [
+      {
+        "name"      : "dataplane",
+        "master"    : "enp11s0",
+        "mode"      : "bridge",
+        "capacity"  : "20"
+      }
+    ]
+
+# Default configuration exposes all host interfaces
+#apiVersion: v1
+#kind: ConfigMap
+#metadata:
+#  name: macvtap-macpro-enp11s0
+#data:
+#  DP_MACVTAP_CONF: '[]'
