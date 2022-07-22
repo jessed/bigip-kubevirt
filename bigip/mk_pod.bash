@@ -118,15 +118,15 @@ spec:
           bus: virtio
       interfaces:
       - name: mgmt
-        bridge: {}
+        macvtap: {}
       - name: data1
-        bridge: {}
+        macvtap: {}
         macAddress: 40:00:00:00:00:02
       - name: data2
-        bridge: {}
+        macvtap: {}
         macAddress: 40:00:00:00:00:03
       - name: data3
-        bridge: {}
+        macvtap: {}
         macAddress: 40:00:00:00:00:01
   volumes:
   - name: containerdisk

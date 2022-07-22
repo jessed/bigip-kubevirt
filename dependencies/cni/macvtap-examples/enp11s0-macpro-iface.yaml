@@ -6,7 +6,7 @@ data:
   DP_MACVTAP_CONF: |
     [
       {
-        "name"      : "dataplane",
+        "name"      : "mgmt",
         "master"    : "enp11s0",
         "mode"      : "bridge",
         "capacity"  : "20"
