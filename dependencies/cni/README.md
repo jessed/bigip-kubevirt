@@ -9,9 +9,9 @@
 *Installation instructions at the bottom*
 
 ## Summary
-kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.77.0/namespace.yaml
-kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.77.0/network-addons-config.crd.yaml
-kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.77.0/operator.yaml
+    kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.77.0/namespace.yaml
+    kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.77.0/network-addons-config.crd.yaml
+    kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.77.0/operator.yaml
 
 ### Enable required add-ons and/or, including feature-gates
 * Include affinity statements
