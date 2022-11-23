@@ -30,7 +30,7 @@ write_files:
 
       # Mount disks with pod annotations and config-map with ltm config
       function mount_podinfo() {
-        # Create and mount pod annotations and bigip-kv config-map
+        # Create and mount pod annotations and bigip_v1515 config-map
         if [[ ! -d $podInfo ]]; then mkdir $podInfo; fi
         mount /dev/vdc $podInfo #2>/dev/null
         if [[ $? != 0 ]]; then

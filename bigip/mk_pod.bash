@@ -1,13 +1,15 @@
 #! /bin/bash
 
-container=bigip-kv
-version=base
+registry="macpro:5000"
+container="bigip-v1515"
+version=1
+containerName="bigip-v1515"
 
 userdataName="userdata"
-configmapName="bigip-kv"
+configmapName="bigip-v1515"
 
 # define config file variables
-hostname="bigip-v2.default.svc.cluster.local"
+hostname="bigip-v1515.default.svc.cluster.local"
 dnsServers="4.2.2.2 8.8.8.8"
 ntpServers="tick.ucla.edu"
 ntpTimezone="US/Pacific"
@@ -16,13 +18,13 @@ mgmtCidr=24
 mgmtGtwy=192.168.20.1
 dataVlanName1="external"
 dataVlanTag1=4091
-dataVlanAddr1=10.10.1.1
+dataVlanAddr1=10.1.100.1
 dataVlanCidr1=24
 dataVlanMac1='40:00:00:00:00:01'
-dataGtwy=10.10.1.254
+dataGtwy=10.10.100.254
 dataVlanName2="internal"
 dataVlanTag2=4092
-dataVlanAddr2=10.20.1.1
+dataVlanAddr2=10.2.100.1
 dataVlanCidr2=24
 dataVlanMac2='40:00:00:00:00:02'
 adminPass="NotTodayNotTomorrow"
@@ -36,7 +38,7 @@ pubKey="$(cat ssh_shared.pub)"
 envFile="$(/usr/bin/base64 -w0 env.ltm)"
 
 # Create config file for config-map creation
-cat << END > cfgmap_bigip-kv.yaml
+cat << END > cfgmap_bigip.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -72,7 +74,7 @@ data:
 END
 
 # Create new config-map with variables replace any existing entry
-kubectl replace -f cfgmap_bigip-kv.yaml --force
+kubectl replace -f cfgmap_bigip.yaml --force
 
 # Create new userdata in secret and replace any existing entry
 userdataSecret=$(kubectl get secret $userdataName 2>/dev/null)
@@ -85,7 +87,7 @@ cat << END > pod.yaml
 apiVersion: kubevirt.io/v1alpha3
 kind: VirtualMachineInstance
 metadata:
-  name: bigip-kv
+  name: $containerName
   annotations:
     k8s.v1.cni.cncf.io/networks: '[ {"name": "bigip-mgmt"} ]'
   labels:
@@ -103,6 +105,7 @@ spec:
         memory: "4096Mi"
         cpu: "2"
     devices:
+      autoattachGraphicsDevice: false
       disks:
       - name: containerdisk
         disk:
@@ -131,7 +134,7 @@ spec:
   volumes:
   - name: containerdisk
     containerDisk:
-      image: k83:5000/$container:$version
+      image: $registry/$container:$version
   - name: cloudinitdisk
     cloudInitConfigDrive:
       secretRef:
