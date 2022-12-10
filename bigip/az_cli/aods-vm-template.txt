@@ -1,0 +1,22 @@
+vm_parameters=$( tee << EOF
+{
+  "vmImage":"$imageUrl",
+  "extendedLocation":{ "name":"$extLocId", "type":"CustomLocation" },
+  "location":"$region",
+  "adminUsername":"admin",
+  "sshPublicKeys":[{ "keyData":"$pubKey" }],
+  "userData": "$cloud_init_b64",
+  "bootMethod":"BIOS",
+  "cpuCores":${vcpu},
+  "memorySizeGB":${memoryGB},
+  "cloudServicesNetworkAttachment":{ "attachedNetworkId":"$myCsnId", "ipAllocationMethod":"Static", "ipv4Address": "$csnV4addr" },
+    "networkAttachments":[
+      { "attachedNetworkId":"$l3OamNetId",    "defaultGateway":"True", "ipAllocationMethod":"Static", "ipv4Address": "$oamV4addr" },
+      { "attachedNetworkId":"$l3ClientNetId", "defaultGateway":"True", "ipAllocationMethod":"Static", "ipv4Address": "$clientV4addr" },
+      { "attachedNetworkId":"$l3ServerNetId", "defaultGateway":"True", "ipAllocationMethod":"Static", "ipv4Address": "$serverV4addr" }
+    ],
+  "storageProfile":{ "osDisk":{ "createOption":"Ephemeral", "deleteOption":"Delete", "diskSizeGB":100 } },
+  "placementHints": []
+}
+EOF
+)

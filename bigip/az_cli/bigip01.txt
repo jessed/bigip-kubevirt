@@ -1,0 +1,54 @@
+# Contains custom settings for VNF instance
+# One file per-instance
+export hostname="bigip01.default.svc.cluster.local"
+export regKey="OFJOJ-NTAGM-IYKYU-QIEFN-ZKKCYBH"
+
+export vcpu=4
+export memoryGB=16
+
+# General configuration parameters
+export dnsServers="4.2.2.2 8.8.8.8"
+export ntpServers="tick.ucla.edu"
+export ntpTimezone="US/Pacific"
+export adminPass="NotTodayNotTomorrow"
+export rootPass="NotTodayNotTomorrow"
+export proxyProtocol="https"
+export strictPasswords="disable"
+export ciDirectory="/shared/cloud_init"
+
+
+# Network configuration parameters
+# Cloud-Services Network
+export csnV4addr="169.254.8.4"
+export csnV4cidr="24"
+export csnMacAddr="40:00:00:01:00:01"
+
+# OAM network
+export oamName="oam"
+export oamV4addr="10.101.16.10"
+export oamV4cidr="24"
+export oamV4gtwy="10.101.16.1"
+export oamMacAddr="40:00:00:01:00:02"
+export oamVlanTag=""
+
+# Client network
+export clientName="clients"
+export clientV4addr="10.101.17.10"
+export clientV4cidr="24"
+export clientV4gtwy="10.101.17.1"
+export clientMacAddr="40:00:00:01:00:03"
+export clientVlanTag=""
+
+# Server network
+export serverName="servers"
+export serverV4addr="10.101.18.10"
+export serverV4cidr="24"
+export serverV4gtwy="10.101.18.1"
+export serverMacAddr="40:00:00:01:00:04"
+export serverVlanTag=""
+
+
+# derived variables
+export vmName=$(echo $hostname | awk 'BEGIN { FS="." } { print $1 }')
+export mgmtGtwy=$oamV4gtwy
+export dataGtwy=$serverV4gtwy
