@@ -1,2 +1,3 @@
-# Wrapper script for creating the cloud-init and VM parameters required by the az-cli for VM instantiation in AODS"
+# Wrapper script for AODS VM instantiation
+
 
