@@ -2,11 +2,18 @@
 
 registry="macpro:5000"
 container="bigip-v1515"
-version=1
+version=2
 containerName="bigip-v1515"
 
-userdataName="userdata"
+# Always or IfNotPresent
+pullPolicy="Always"
+
+
 configmapName="bigip-v1515"
+cloudInit="cloud-init.bash"
+userdataName="userdata"
+userData=$(cat $cloudInit)
+cidataName="cidata.txt"
 
 # define config file variables
 hostname="bigip-v1515.default.svc.cluster.local"
@@ -30,12 +37,12 @@ dataVlanMac2='40:00:00:00:00:02'
 adminPass="NotTodayNotTomorrow"
 rootPass='NotTodayNotTomorrow'
 proxyProtocol='https'
+strictpasswords="disable"
+pubKey="$(/usr/bin/base64 -w0 ssh_shared.pub)"
+envFile="$(/usr/bin/base64 -w0 env.ltm)"
 #proxyAddr='10.10.1.254'
 #proxyPort='3128'
 #regKey="OFJOJ-NTAGM-IYKYU-QIEFN-ZKKCYBH"
-strictpasswords="disable"
-pubKey="$(cat ssh_shared.pub)"
-envFile="$(/usr/bin/base64 -w0 env.ltm)"
 
 # Create config file for config-map creation
 cat << END > cfgmap_bigip.yaml
@@ -73,13 +80,20 @@ data:
   envFile: "$envFile"
 END
 
+
+# Create cloud-init with hardcoded values
+sed -e '
+s#pubKeyValue#'$pubKey'#
+s#envFileValue#'$envFile'#
+' $cloudInit > $cidataName 
+
 # Create new config-map with variables replace any existing entry
-kubectl replace -f cfgmap_bigip.yaml --force
+#kubectl replace -f cfgmap_bigip.yaml --force
 
 # Create new userdata in secret and replace any existing entry
 userdataSecret=$(kubectl get secret $userdataName 2>/dev/null)
 if [[ $? == 0 ]]; then kubectl delete secret $userdataName; fi
-kubectl create secret generic $userdataName --from-file=userdata=cloud-init.bash
+if [[ $? == 0 ]]; then kubectl create secret generic $userdataName --from-file=userdata=$cidataName; fi
 
 
 # Create new pod yaml
@@ -110,13 +124,10 @@ spec:
       - name: containerdisk
         disk:
           bus: virtio
-      - name: cloudinitdisk
-        disk:
-          bus: virtio
       - name: podinfo
         disk:
           bus: virtio
-      - name: networks
+      - name: cloud-init
         disk:
           bus: virtio
       interfaces:
@@ -135,7 +146,8 @@ spec:
   - name: containerdisk
     containerDisk:
       image: $registry/$container:$version
-  - name: cloudinitdisk
+      imagePullPolicy: $pullPolicy
+  - name: cloud-init
     cloudInitConfigDrive:
       secretRef:
         name: $userdataName
@@ -145,9 +157,6 @@ spec:
       - path: annotations
         fieldRef:
           fieldPath: metadata.annotations
-  - name: networks
-    configMap:
-      name: $configmapName
   networks:
   - name: mgmt
     multus:
