@@ -5,6 +5,7 @@ Azure for Operators Distributed Services, AODS, is a new offering from Azure tha
 
 AODS runs leverages Kubernetes for all CNF/VNF scheduling and execution. The Kubernetes aspect of AODS is entirely obscured from the customer, similar to how VELOS, r-Series, and BIG-IP Next use Kubernetes "under the hood" without exposing it to the customer for direct interaction. This "under the hood" K8s deployment is new to MSFT/Azure, and the entire system has been under development this year.
 
+## Limitations and Incompatibilities with BIG-IP VE
 Unfortunately, some of the architectural choices made by Azure for AODS cause problems with deploying BIG-IP into the environment. Here is a brief summary of those pain points:
 
 1. Being based on K8s, AODS only supports the deployment of containers, not native virtual machines
