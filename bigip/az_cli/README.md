@@ -13,11 +13,18 @@ Unfortunately, some of the architectural choices made by Azure for AODS cause pr
     * See the 'containers' subdirectory within this repository for a script to build and push a container using docker.
 2. Azure has decided that AODS will only support 'headless' deployments, meaning that VMs will not have a default video device attached to the instance.
     * By default the VE image uses a graphical 'splash' screen presented by grub. This splash screen makes use of the framebuffer, which *requires* a video device attachment. If grub cannot access the framebuffer the boot process will stall; there is no timeout period, it will block the boot process indefinitely.
-      * This decision is intended to save memory because the virtual video device consumes 16MB of memory. This equates to 1GB of memory for every 64 VMs deployed into AODS.
+    * For this reason it is necessary to create a customer QCOW2 image that removes the grub splash screen.
+    * This decision is intended to save memory because the virtual video device consumes 16MB of memory. This equates to 1GB of memory for every 64 VMs deployed into AODS.
       * NOTE: This is a deviation from normal Azure VM deployments, which do receive a default video device (though it is unused).
 3. AODS does not support K8s config-maps, nor any other method of providing configuration data to the instance at boot-time other than the cloud-init script itself.
+    * As suggested above, this means that the cloud-init script passed to the VM must have all variables hard-coded.
     * This limitation is due to the azure CLI lacking support for config-maps, not due to any restriction at the Kubernetes layer. 
-    * This decision is probably the result of wanting to insulate the customer from direct K8s interaction.
+        * This decision is probably the result of wanting to abstract K8s management from the customer. 
+    * AODS is currently working on a method of making network data available via the a mountable volume.
+        * The format *should* match Cloud-Init's [Network Config Version 2](https://cloudinit.readthedocs.io/en/latest/topics/network-config-format-v2.html#network-config-v2) format, which is basically netplan format.
+        * The difficulty of extracting BIG-IP configuration information from this format remains to be seen.
+    * It *may* be possible to leverage the [f5-bigip-runtime-init](https://github.com/F5Networks/f5-bigip-runtime-init#inline-big-ip-runtime-config) to retrieve the configuration data at first-boot. This possiblity has not yet been investigated.
+        * The latest version of the f5-bigip-runtime-init does not appear to require a custom image (unlike previous versions), making this approach more attractive.
 4. AODS mandates the use of Mellanox ConnectX-6 network cards, and from those SRIOV virtual-functions are exposed to the VMs using the [Multus CNI](https://github.com/k8snetworkplumbingwg/multus-cni).
     * Purely virtual interfaces (i.e. virtio) are **not** supported at all; all interfaces are ConnectX-6 virtual-functions.
       * The K8s pod network is **not** connected to the VM.
