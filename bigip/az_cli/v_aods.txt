@@ -30,7 +30,7 @@ export netFabricID="/subscriptions/${mysub}/resourceGroups/${myrg}/providers/Mic
 export isoDomainID="/subscriptions/${mysub}/resourceGroups/${isolationRG}/providers/Microsoft.ManagedNetworkFabric/l3IsolationDomains/${isolationDomain}"
 
 # Extended location ID
-export extLocId="/subscriptions/${mysub}/resourceGroups/${extLocationRG}/providers/Microsoft.ExtendedLocation/customLocations/${myLoc}"
+export extLocId="/subscriptions/${mysub}/resourceGroups/${extLocationRG}/providers/Microsoft.ExtendedLocation/customLocations/${extLocation}"
 
 # Cloud-services network ID
 export myCsnId="/subscriptions/${mysub}/resourceGroups/${myrg}/providers/Microsoft.NetworkCloud/cloudServicesNetworks/${myCsn}"
