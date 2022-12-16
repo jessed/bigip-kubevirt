@@ -33,7 +33,7 @@ export isoDomainID="/subscriptions/${mysub}/resourceGroups/${isolationRG}/provid
 export extLocId="/subscriptions/${mysub}/resourceGroups/${extLocationRG}/providers/Microsoft.ExtendedLocation/customLocations/${extLocation}"
 
 # Cloud-services network ID
-export myCsnId="/subscriptions/${mysub}/resourceGroups/${myrg}/providers/Microsoft.NetworkCloud/cloudServicesNetworks/${myCsn}"
+export myCsnId="/subscriptions/${mysub}/resourceGroups/${myrg}/providers/Microsoft.NetworkCloud/cloudServicesNetworks/${myCsNet}"
 
 # OAM network ID
 export l3OamNetId="/subscriptions/${mysub}/resourceGroups/${myrg}/providers/Microsoft.NetworkCloud/l3Networks/${l3OamNet}"
