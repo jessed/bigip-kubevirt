@@ -34,13 +34,13 @@
               config[dataVlanTag1]=4091
               config[dataVlanAddr1]=10.1.100.1
               config[dataVlanCidr1]=24
-              config[dataVlanMac1]='40:00:00:00:00:01'
+              #config[dataVlanMac1]='40:00:00:00:00:01'
               config[dataGtwy]=10.10.100.254
               config[dataVlanName2]="internal"
               config[dataVlanTag2]=4092
               config[dataVlanAddr2]=10.2.100.1
               config[dataVlanCidr2]=24
-              config[dataVlanMac2]='40:00:00:00:00:02'
+              #config[dataVlanMac2]='40:00:00:00:00:02'
               config[adminPass]="NotTodayNotTomorrow"
               config[rootPass]='NotTodayNotTomorrow'
               config[proxyProtocol]='https'

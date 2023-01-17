@@ -2,7 +2,7 @@
 
 registry="macpro:5000"
 container="bigip-v1515"
-version=2
+version=3
 containerName="bigip-v1515"
 
 # Always or IfNotPresent
@@ -14,6 +14,7 @@ cloudInit="cloud-init.bash"
 userdataName="userdata"
 userData=$(cat $cloudInit)
 cidataName="cidata.txt"
+#cidataB64Name="cidata64.txt"
 
 # define config file variables
 hostname="bigip-v1515.default.svc.cluster.local"
@@ -87,6 +88,9 @@ s#pubKeyValue#'$pubKey'#
 s#envFileValue#'$envFile'#
 ' $cloudInit > $cidataName 
 
+# Create base64 encoded cloud-init
+#cat $cidataName | base64 -w0 > ${cidataB64Name}
+
 # Create new config-map with variables replace any existing entry
 #kubectl replace -f cfgmap_bigip.yaml --force
 
@@ -148,7 +152,7 @@ spec:
       image: $registry/$container:$version
       imagePullPolicy: $pullPolicy
   - name: cloud-init
-    cloudInitConfigDrive:
+    cloudInitNoCloud:
       secretRef:
         name: $userdataName
   - name: podinfo
