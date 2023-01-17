@@ -7,7 +7,7 @@
 
 # define instance-specific variables here to allow for overriding defaults from vars.bash
 aods_vars="v_aods.txt"
-aods_vm_base="v_aods-vm-template.txt"
+aods_vm_base="v_vm-template.txt"
 instance_vars="v_bigip01.txt"
 ci_template="v_cloud-init.template"
 cloud_init_def=""
@@ -23,7 +23,8 @@ source $instance_vars
 
 mk_cloud_init() {
   cloud_init_b64=$(perl -pe 's;(\\*)(\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' $ci_template | base64 -w0)
-
+  
+  # create a decoded copy of the cloud-init for inspection
   [[ $DEBUG ]] && { echo -n $cloud_init_b64 | base64 -d > working/ci_data.bash; }
 }
 
@@ -47,9 +48,6 @@ mk_cloud_init
 # Create the vm_parameters JSON blob.
 # This uses the output of 'mk_cloud_init' and must come second
 mk_vm_parameters 
-
-
-#echo "az networkcloud virtualmachine create --name $vmName --resource-group $myrg --subscription $mysub --virtual-machine-parameters '$vm_parameters' --debug"
 
 tee << EOF > az_command.bash
 az networkcloud virtualmachine create --name $vmName \

@@ -6,28 +6,29 @@
 export mysub="d86da6b7-31a4-48f7-8bc1-2a643f539ca7"                 # Subscription ID
 export myrg="rg-precert-F5-AODS-OnPrem"                             # AODS resource group 
 export region="eastus"                                              # region
-export extLocationRG="pct1-zyswugihttxk2-hostedresources-763640b7"  # Extended location resource-group
-export extLocation="pct1-zyswugihttxk2-cstm-loc"                    # Extended location name
-export aodsCluster="pct1-zyswugihttxk2"                             # AODS cluster name
-export myCsNet="BigIP-CSN"                                          # Cloud-services network 
-export isolationRG="RG_vSRX_Tenant"                                 # Isolation domain resource group
-export isolationDomain="L3-ISD-vSRX-UnTrusted-Instance1"            # Isolation domain
-export l3OamNet="L3-BigIP-OAM"                                      # OAM L3 network
-export l3ClientNet="L3-BigIPClient"                                 # BIG-IP client-side L3 network 
-export l3ServerNet="L3-BigIPServer"                                 # BIG-IP server-side L3 network
+export extLocation="pct1-kc7cbtjwqwzgo-cstm-loc"                    # Extended location name
+export myCsNet="csn-f5"                                             # Cloud-services network 
+export l3OamNet="L3-wkl-BigIPmgmt"                                      # OAM L3 network
+export l3ClientNet="L3-wkl-BigIPClient"                                 # BIG-IP client-side L3 network 
+export l3ServerNet="L3-wkl-BigIPServer"                                 # BIG-IP server-side L3 network
+export extLocationRG="pct1-kc7cbtjwqwzgo-hostedresources-6f869baa"  # Extended location resource-group
+#export aodsCluster="pct1-zyswugihttxk2"                             # AODS cluster name
+#export isolationRG="RG_vSRX_Tenant"                                 # Isolation domain resource group
+#export isolationDomain="L3-ISD-vSRX-UnTrusted-Instance1"            # Isolation domain
+#export netFabricName=""                                             # Network Fabric
 
-export netFabricName=""                                             # Network Fabric
+export imageUrl="jesseacr.azurecr.io/bigip-v1515:3"
+export pubKey=$(cat ssh_key.txt)
+export pubKey_b64=$(cat ssh_key.txt | base64 -w0)
 
-export pubKey="c3NoLXJzYSBBQUFBQjNOemFDMXljMkVBQUFBREFRQUJBQUFCZ1FDNjl3VVN3em1qYmRFb2dDZjBwTHlZaW9QSVZieENqZStnZUtzaTdSS2tSQ2NYY3Rwb0NmVkVROUVXeVFzdTVMd3A5dDB2Yk5yNmNKYVVETmFlcVczVjlRM1pNUURkejREQkl3ck5YY3NJR3pnUDFNSi9IUW9rNTRaRDZ5cy9QVGZBcHBFYWROVlNtSkk0UE90RUVjTUMxMTNEcytERXIvMjk3bmNJVU1aZlVPSm9nbTg5emZUaUc0S2YrRG03cmVMRS9RTG9hSE1IZjJ3Yk5QWHFzMEVSWDZ5NWhiWk1QZDZXNG1CM1R3RkpFdGY4WndtaFNxUFNuUUE3cVN0T2hTQUhCRWlDS3FMaUZEbXgybDdTN1BEMDZONnpNd05CcUwzUGh5K2l3NURsUnJzWmdQeFZiaXQ2UG1DQ2N6dkhRKzFiNnM1L3ZaMjJOektSTkV3N01rYnJLRnBCeXRkRXJUaFRtNGFmUndVSnBmVDRUQlBrUkw3VTZDcy9yNGJneUFQSU9ieXNVTWFxY2RjU1RnMSticklTTUc3WVVyWXZxcTA2ZkF3aTRQakdqcjVmSDhjUEVNRkQxRXBQeDBCNnRJMXpzOUFLb3JGd24vUzRhdlNNZ2FoYS9zNVNjTUFlSmNhUk4vM2pmcW5lM0t1eHFMdUw4cjhjZkJQNDhRWTVDczA9IGdlbmVyYXRlZC1ieS1henVyZQo="
-export imageUrl="jesseacr.azurecr.io/bigip-v1515:2"
-
+#export pubKey="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC69wUSwzmjbdEogCf0pLyYioPIVbxCje+geKsi7RKkRCcXctpoCfVEQ9EWyQsu5Lwp9t0vbNr6cJaUDNaeqW3V9Q3ZMQDdz4DBIwrNXcsIGzgP1MJ/HQok54ZD6ys/PTfAppEadNVSmJI4POtEEcMC113Ds+DEr/297ncIUMZfUOJogm89zfTiG4Kf+Dm7reLE/QLoaHMHf2wbNPXqs0ERX6y5hbZMPd6W4mB3TwFJEtf8ZwmhSqPSnQA7qStOhSAHBEiCKqLiFDmx2l7S7PD06N6zMwNBqL3Phy+iw5DlRrsZgPxVbit6PmCCczvHQ+1b6s5/vZ22NzKRNEw7MkbrKFpBytdErThTm4afRwUJpfT4TBPkRL7U6Cs/r4bgyAPIObysUMaqcdcSTg1+brISMG7YUrYvqq06fAwi4PjGjr5fH8cPEMFD1EpPx0B6tI1zs9AKorFwn/S4avSMgaha/s5ScMAeJcaRN/3jfqne3KuxqLuL8r8cfBP48QY5Cs0= generated-by-azure"
 
 ## Object IDs
 # Network fabric ID
-export netFabricID="/subscriptions/${mysub}/resourceGroups/${myrg}/providers/Microsoft.ManagedNetworkFabric/networkFabrics/${netFabricName}"
+#export netFabricID="/subscriptions/${mysub}/resourceGroups/${myrg}/providers/Microsoft.ManagedNetworkFabric/networkFabrics/${netFabricName}"
 
 # Isolation domain ID
-export isoDomainID="/subscriptions/${mysub}/resourceGroups/${isolationRG}/providers/Microsoft.ManagedNetworkFabric/l3IsolationDomains/${isolationDomain}"
+#export isoDomainID="/subscriptions/${mysub}/resourceGroups/${isolationRG}/providers/Microsoft.ManagedNetworkFabric/l3IsolationDomains/${isolationDomain}"
 
 # Extended location ID
 export extLocId="/subscriptions/${mysub}/resourceGroups/${extLocationRG}/providers/Microsoft.ExtendedLocation/customLocations/${extLocation}"
@@ -42,10 +43,6 @@ export l3OamNetId="/subscriptions/${mysub}/resourceGroups/${myrg}/providers/Micr
 export l3ClientNetId="/subscriptions/${mysub}/resourceGroups/${myrg}/providers/Microsoft.NetworkCloud/l3Networks/${l3ClientNet}"
 
 # Server network ID
-export l3ServerNetId="/subscriptions/${mysub}/resourceGroups/${myrg}/providers/Microsoft.NetworkCloud/l3Networks/${l3ClientNet}"
+export l3ServerNetId="/subscriptions/${mysub}/resourceGroups/${myrg}/providers/Microsoft.NetworkCloud/l3Networks/${l3ServerNet}"
 
 ## /Variables
-
-
-
-

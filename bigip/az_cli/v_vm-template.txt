@@ -9,11 +9,11 @@ vm_parameters=$( tee << EOF
   "bootMethod":"BIOS",
   "cpuCores":${vcpu},
   "memorySizeGB":${memoryGB},
-  "cloudServicesNetworkAttachment":{ "attachedNetworkId":"$myCsnId", "ipAllocationMethod":"Static", "ipv4Address": "$csnV4addr" },
+  "cloudServicesNetworkAttachment":{ "attachedNetworkId":"$myCsnId", "ipAllocationMethod":"Dynamic" },
     "networkAttachments":[
       { "attachedNetworkId":"$l3OamNetId",    "defaultGateway":"True", "ipAllocationMethod":"Static", "ipv4Address": "$oamV4addr" },
-      { "attachedNetworkId":"$l3ClientNetId", "defaultGateway":"True", "ipAllocationMethod":"Static", "ipv4Address": "$clientV4addr" },
-      { "attachedNetworkId":"$l3ServerNetId", "defaultGateway":"True", "ipAllocationMethod":"Static", "ipv4Address": "$serverV4addr" }
+      { "attachedNetworkId":"$l3ClientNetId", "defaultGateway":"False", "ipAllocationMethod":"Static", "ipv4Address": "$clientV4addr" },
+      { "attachedNetworkId":"$l3ServerNetId", "defaultGateway":"False", "ipAllocationMethod":"Static", "ipv4Address": "$serverV4addr" }
     ],
   "storageProfile":{ "osDisk":{ "createOption":"Ephemeral", "deleteOption":"Delete", "diskSizeGB":100 } },
   "placementHints": []
