@@ -1,0 +1,28 @@
+# Contains variables common to all BIG-IP AODS deployments
+
+# General configuration parameters
+export vcpu=4
+export memoryGB=16
+export diskSize=100
+export dnsServers="4.2.2.2 8.8.8.8"
+export ntpServers="169.254.0.13 169.254.0.14 169.254.0.15"
+export ntpTimezone="US/Pacific"
+export adminPass="NotTodayNotTomorrow"
+export rootPass="NotTodayNotTomorrow"
+export strictPasswords="disable"
+export ciDirectory="/shared/cloud_init"
+export sshPort="22"
+export proxyProtocol="https"
+export proxyAddr="169.254.0.11"
+export proxyPort="3128"
+export rebindNicDriver=$(base64 -w0 artifacts/rebind_eth0_driver)
+export userAlert=$(base64 -w0 artifacts/user_alert.conf)
+export pubKey=$(cat artifacts/ssh_key.txt)
+export pubKey_b64=$(base64 -w0 artifacts/ssh_key.txt)
+
+#export imageUrl="jesseacr.azurecr.io/bigip-v1613:1"
+export imageUrl="crprecertf5001.azurecr.io/bigip-v1613:1"
+
+#export regKey=$(cat regkey.txt)
+
+# vim: set syntax=bash tabstop=2 expandtab:

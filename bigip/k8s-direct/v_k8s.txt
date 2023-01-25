@@ -1,0 +1,14 @@
+# registry and image variables
+export registry="macpro:5000"
+export image="bigip-v1613"
+export version=1
+export containerName="bigip-v1613"
+
+# Always or IfNotPresent
+export pullPolicy="IfNotPresent"
+
+# userdata secret
+export userdataName="bigip-userdata"
+
+
+# vim: set syntax=bash tabstop=2 expandtab:

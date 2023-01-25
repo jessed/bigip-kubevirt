@@ -15,7 +15,7 @@ vm_parameters=$( tee << EOF
       { "attachedNetworkId":"$l3ClientNetId", "defaultGateway":"False", "ipAllocationMethod":"Static", "ipv4Address": "$clientV4addr" },
       { "attachedNetworkId":"$l3ServerNetId", "defaultGateway":"False", "ipAllocationMethod":"Static", "ipv4Address": "$serverV4addr" }
     ],
-  "storageProfile":{ "osDisk":{ "createOption":"Ephemeral", "deleteOption":"Delete", "diskSizeGB":100 } },
+  "storageProfile":{ "osDisk":{ "createOption":"Ephemeral", "deleteOption":"Delete", "diskSizeGB":${diskSize} } },
   "placementHints": []
 }
 EOF

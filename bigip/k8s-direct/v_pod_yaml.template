@@ -1,0 +1,74 @@
+apiVersion: kubevirt.io/v1alpha3
+kind: VirtualMachineInstance
+metadata:
+  name: ${containerName}
+  annotations:
+    k8s.v1.cni.cncf.io/networks: '[ {"name": "bigip-mgmt"} ]'
+  labels:
+    app: bigip
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: macpro
+  domain:
+    cpu:
+      model: IvyBridge-IBRS
+    machine:
+      type: q35
+    resources:
+      requests:
+        memory: "4096Mi"
+        cpu: "2"
+    devices:
+      autoattachGraphicsDevice: false
+      disks:
+      - name: containerdisk
+        disk:
+          bus: virtio
+      - name: podinfo
+        disk:
+          bus: virtio
+      - name: cloud-init
+        disk:
+          bus: virtio
+      interfaces:
+      - name: mgmt
+        macvtap: {}
+      - name: data1
+        macvtap: {}
+        macAddress: 40:00:00:00:00:02
+      - name: data2
+        macvtap: {}
+        macAddress: 40:00:00:00:00:03
+      - name: data3
+        macvtap: {}
+        macAddress: 40:00:00:00:00:01
+  volumes:
+  - name: containerdisk
+    containerDisk:
+      image: ${registry}/${image}:${version}
+      imagePullPolicy: ${pullPolicy}
+  - name: cloud-init
+    cloudInitNoCloud:
+      secretRef:
+        name: ${userdataName}
+  - name: podinfo
+    downwardAPI:
+      fields:
+      - path: annotations
+        fieldRef:
+          fieldPath: metadata.annotations
+  networks:
+  - name: mgmt
+    multus:
+      networkName: mgmt
+  - name: data1
+    multus:
+      networkName: data10
+  - name: data2
+    multus:
+      networkName: data20
+  - name: data3
+    multus:
+      networkName: data30
+
+# vim: syntax=yaml tabstop=2 expandtab:

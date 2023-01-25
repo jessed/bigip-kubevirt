@@ -5,15 +5,22 @@
 ###
 # Source AODS variables
 
-# define instance-specific variables here to allow for overriding defaults from vars.bash
+if [[ -z $1 ]]; then
+  echo "ERROR: instance variable file not provided"
+  echo "USAGE: $0 <instance_variables_file"
+  exit 1
+fi
+
+instance_vars=$1
+common_vars="v_common_bigip.txt"
 aods_vars="v_aods.txt"
 aods_vm_base="v_vm-template.txt"
-instance_vars="v_bigip01.txt"
 ci_template="v_cloud-init.template"
 cloud_init_def=""
 DEBUG=1
 
 source $aods_vars
+source $common_vars
 source $instance_vars
 
 
@@ -25,7 +32,7 @@ mk_cloud_init() {
   cloud_init_b64=$(perl -pe 's;(\\*)(\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' $ci_template | base64 -w0)
   
   # create a decoded copy of the cloud-init for inspection
-  [[ $DEBUG ]] && { echo -n $cloud_init_b64 | base64 -d > working/ci_data.bash; }
+  [[ $DEBUG ]] && { printf "%s" $cloud_init_b64 | base64 -d > working/ci_data.bash; }
 }
 
 # Create the VM parameters
