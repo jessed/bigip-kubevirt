@@ -1,5 +1,5 @@
 # Contains custom settings for VNF instance (One file per-instance)
-export shortname="bigip02"
+export shortname="bigip04"
 export hostname="${shortname}.default.svc.cluster.local"
 
 # NOTE: All mac addresses are commented out to force the cloud-init script
@@ -7,13 +7,13 @@ export hostname="${shortname}.default.svc.cluster.local"
 
 # Network configuration parameters
 # Cloud-Services Network
-export csnV4addr="169.254.8.12"
+export csnV4addr="169.254.8.14"
 export csnV4cidr="16"
 #export csnMacAddr=""
 
 # OAM network
 export oamName="oam"
-export oamV4addr="10.101.16.12"
+export oamV4addr="10.101.16.14"
 export oamV4cidr="24"
 export oamV4gtwy="10.101.16.1"
 #export oamMacAddr=""
@@ -21,7 +21,7 @@ export oamVlanTag=""
 
 # Client network
 export clientName="clients"
-export clientV4addr="10.101.17.12"
+export clientV4addr="10.101.17.14"
 export clientV4cidr="24"
 export clientV4gtwy="10.101.17.1"
 #export clientMacAddr=""
@@ -29,12 +29,11 @@ export clientVlanTag=""
 
 # Server network
 export serverName="servers"
-export serverV4addr="10.101.18.12"
+export serverV4addr="10.101.18.14"
 export serverV4cidr="24"
 export serverV4gtwy="10.101.18.1"
 #export serverMacAddr=""
 export serverVlanTag=""
-
 
 # derived variables
 export vmName=$(echo $hostname | awk 'BEGIN { FS="." } { print $1 }')

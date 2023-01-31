@@ -8,7 +8,10 @@ export containerName="bigip-v1613"
 export pullPolicy="IfNotPresent"
 
 # userdata secret
-export userdataName="bigip-userdata"
+#export userdataName="bigip-userdata"
+#
+## network-config secret
+#export networkConfigName='bigip-networkdata'
 
 
 # vim: set syntax=bash tabstop=2 expandtab:

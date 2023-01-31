@@ -24,9 +24,6 @@ spec:
       - name: containerdisk
         disk:
           bus: virtio
-      - name: podinfo
-        disk:
-          bus: virtio
       - name: cloud-init
         disk:
           bus: virtio
@@ -51,12 +48,8 @@ spec:
     cloudInitNoCloud:
       secretRef:
         name: ${userdataName}
-  - name: podinfo
-    downwardAPI:
-      fields:
-      - path: annotations
-        fieldRef:
-          fieldPath: metadata.annotations
+      networkDataSecretRef:
+        name: ${networkConfigName}
   networks:
   - name: mgmt
     multus:

@@ -1,0 +1,23 @@
+## Common variables
+export dnsServers="4.2.2.2 8.8.8.8"
+export ntpServers="tick.ucla.edu"
+export ntpTimezone="US/Pacific"
+export mgmtAddr='192.168.20.51'
+export mgmtCidr='24'
+export mgmtGtwy='192.168.20.1'
+export adminPass="admin"
+export rootPass='default'
+export proxyProtocol='https'
+export strictpasswords="disable"
+#export regKey="OFJOJ-NTAGM-IYKYU-QIEFN-ZKKCYBH"
+
+
+export pubKey=$(/usr/bin/base64 -w0 artifacts/ssh_shared.pub)
+export envFile=$(/usr/bin/base64 -w0 env.ltm)
+export rebindNicDriver=$(base64 -w0 artifacts/rebind_eth0_driver)
+export userAlert=$(base64 -w0 artifacts/user_alert.conf)
+export tmmInit=$(base64 -w0 artifacts/tmm_init.tcl)
+
+
+
+## vim: set syntax=bash tabstop=2 expandtab:

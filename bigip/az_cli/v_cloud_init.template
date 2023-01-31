@@ -17,21 +17,29 @@ write_files:
     encoding: b64
     content: ${rebindNicDriver}
 
-  - path: /config/tmm_init.tcl
-    permissions: 0644
-    content: |
-      device driver vendor_dev 15b3:101e mlxvf5
-      ndal rx_devq_sz 512 15b3:101e
-      ndal tx_devq_sz 512 15b3:101e
-      #device driver vendor_dev 15b3:101e xnet
+  #- path: /config/tmm_init.tcl
+  #  permissions: 0644
+  #  content: |
+  #    device driver vendor_dev 15b3:101e mlxvf5
+  #    #ndal rx_devq_sz 512 15b3:101e
+  #    #ndal tx_devq_sz 512 15b3:101e
+  #    #device driver vendor_dev 15b3:101e xnet
+
+  - path: /shared/reload_license.bash
+    permissions: 0755
+    encoding: b64
+    content: ${reloadLicense}
 
   - path: /shared/cloud_init.bash
     permissions: 0755
     content: |
       #! /bin/bash
 
-      # 1 = debugging enabled, 0 = debugging disabled
-      DEBUG=1
+      DEBUG=1                        # 1 = debugging enabled, 0 = debugging disabled
+      ciDir="/shared/cloud_init"
+      netCfg="$ciDir/network-config"
+
+
       # source wait_bigip_ready* functions
       source /usr/lib/bigstart/bigip-ready-functions
 
@@ -39,6 +47,14 @@ write_files:
       declare -A config
       declare -A mac_map
       declare -A interfaces
+
+      # used to generate the (unused) vlan tag
+      vlanStart=4000
+      ciDisk="/dev/vdb"
+
+      # error condition tracking
+      ciDiskErr=0
+      netconfigErr=0
 
       # Hardcode config elements to work-around the lack of config-maps in AODS
       # System-wide variables
@@ -50,8 +66,6 @@ write_files:
       config[sshPort]="${sshPort}"
       config[regKey]="${regKey}"
       config[pubKey]="${pubKey_b64}"
-      config[rebindNicScript]="${rebindNicDriver}"
-      config[userAlert]="${userAlert}"
       config[envFile]="${envFile}"
       config[proxyProtocol]="${proxyProtocol}"
       config[proxyAddr]="${proxyAddr}"
@@ -85,6 +99,19 @@ write_files:
       ### Functions
       ###
 
+      # Craete cloud-init info location
+      function create_ci_dir() {
+        # Create cloud_init dir, link to /root/, and output variable values
+        if [[ ! -d $ciDir ]]; then
+          mkdir /shared/cloud_init
+        else
+          rm -rf $ciDir/*
+        fi
+
+        # copy this script to cloud_init location for troubleshooting
+        cp $0 $ciDir/cloud_init.bash && chmod 755 $ciDir/cloud_init.bash
+      }
+
       # Configure system global settings
       function update_global() {
         # Disable DHCP if a management-ip was provided in config-map
@@ -93,11 +120,11 @@ write_files:
           tmsh modify sys global-settings mgmt-dhcp disabled
         fi
 
-        echo "($(date +%T) )Setting hostname to '${config[hostname]}'"
+        echo "($(date +%T)) Setting hostname to '${config[hostname]}'"
         tmsh modify sys global-settings hostname ${config[hostname]}
-        echo "($(date +%T) )Setting DNS servers to ${config[dnsServers]}"
+        echo "($(date +%T)) Setting DNS servers to ${config[dnsServers]}"
         tmsh modify sys dns name-servers replace-all-with { ${config[dnsServers]} }
-        echo "($(date +%T) )Setting timezone to ${config[ntpTimezone]} and NTP servers to ${config[ntpServers]}"
+        echo "($(date +%T)) Setting timezone to ${config[ntpTimezone]} and NTP servers to ${config[ntpServers]}"
         tmsh modify sys ntp servers replace-all-with { ${config[ntpServers]} } timezone ${config[ntpTimezone]}
         echo "($(date +%T)) Updating scp whitelist to include /shared"
         echo "/shared" >> /config/ssh/scp.whitelist
@@ -105,11 +132,11 @@ write_files:
 
         # If defined, configure proxy host and port 
         if [[ -n ${config[proxyAddr]} ]]; then
-          echo "($(date +%T)) Setting proxy.host to ${config[proxyAddr]}"
+          echo "($(date +%T)) Setting sys db proxy.host to ${config[proxyAddr]}"
           tmsh modify sys db proxy.host value ${config[proxyAddr]}
         fi
         if [[ -n ${config[proxyPort]} ]]; then
-          echo "($(date +%T)) Setting proxy.host to ${config[proxyPort]}"
+          echo "($(date +%T)) Setting sys db proxy.port to ${config[proxyPort]}"
           tmsh modify sys db proxy.port value ${config[proxyPort]}
         fi
 
@@ -136,196 +163,165 @@ write_files:
         fi
       }
 
-      # Assign management-ip only if a mgmtAddr is found in the config-map
+      # Assign management-ip based on network-data or config array
       function assign_mgmt_addr() {
+        if [[ -f $netCfg ]]; then
+          # AODS uses a /20 for the CSN, but BIG-IP only permits link-local addresses with /16
+          mgmtIp=$(awk '/mgmt/ { print $4 }' $netCfg | cut -d/ -f1)
+          mgmtAddr="$mgmtIp/16"
+        else
+          mgmtAddr="${config[mgmtAddr]}/${config[mgmtCidr]}"
+        fi
+
+        if [[ -z $mgmtAddr ]]; then
+          echo "($(date +%T)) ERROR: management-ip not found, unable to assign management-ip"
+          return
+        fi
+
+        # Disable DHCP for management-ip
+        echo "($(date +%T)) Disabling management DHCP"
+        tmsh modify sys global-settings mgmt-dhcp disabled
+
         # Assign management addr
-        if [[ -n ${config[mgmtAddr]} ]]; then
-          echo "($(date +%T)) Deleting default/dhcp management-ip"
-          tmsh delete sys management-ip all
-          echo "($(date +%T)) Setting management-ip to ${config[mgmtAddr]}"
-          tmsh create sys management-ip ${config[mgmtAddr]}/${config[mgmtCidr]}
-        fi
-        if [[ -n ${config[mgmtGtwy]} ]]; then
-          echo "($(date +%T)) Creating management default-route"
-          tmsh create sys management-route default gateway ${config[mgmtGtwy]}
-        fi
+        echo "($(date +%T)) Deleting default/dhcp management-ip"
+        tmsh delete sys management-ip all
+        echo "($(date +%T)) Setting management-ip to $mgmtAddr"
+        tmsh create sys management-ip $mgmtAddr
       }
 
-      # create vlans based on mac-addresses provided in the config-map
-      function create_dataplane_by_mac() {
-        # Find all nics
-        nics=$(tmsh show net interface | awk '/^1/ { printf("%s ", $1) }')
+      # get network-config
+      function get_netconfig() {
+        echo "($(date +%T)) Creating /tmp/netconfig to mount cloud-init ($ciDisk)"
+        mkdir /tmp/netconfig
+        echo "($(date +%T)) Mounting $ciDisk to /tmp/netconfig"
+        mount $ciDisk /tmp/netconfig
 
-        echo "($(date +%T)) Beginning interface identification for interfaces: $nics"
-        # First wait for interfaces to be available in case TMM isn't done initializing
-        for n in $nics; do
-          # Wait up to 120 seconds for the mac addresses to become populated
-          for (( count=0; $count < 120; count++)); do
-            mac=$(tmsh show net interface $n all-properties | awk '/^1/ { print tolower($3) }')
-            if [[ -n $mac && ! $mac =~ "none"  ]]; then
-              echo "($(date +%T)) Found mac address for $n ($mac), adding to interface list"
-              interfaces[${n#0}]=${mac#0}
-              break
-            else
-              sleep 1
-            fi
-          done
-          if [[ -z ${interfaces[${n#0}]} ]]; then
-            echo "($(date +%T)) ERROR: Failed to find mac-address for interface $n"
-          fi
-        done
+        # make sure the disk mounted successfully
+        if [[ $? != 0 ]]; then
+          echo "($(date +%T)) ERROR: Failed to mount cloud-init drive '$ciDisk' (ciDiskErr = 1)"
+          ciDiskErr=1
+          netconfigErr=1
+          return
+        fi
 
-        echo "($(date +%T)) Interface identification complete"
-        test $DEBUG && {
-          tmsh show net interface all-properties
-          echo "($(date +%T)) Interfaces mapped:"
-          for i in ${!interfaces[@]}; do
-            echo "$i -> ${interfaces[$i]}"
-          done
+        echo "($(date +%T)) Copying /tmp/netconfig/network-config to $netCfg"
+        cp /tmp/netconfig/network-config $netCfg
+        test -f /tmp/netconfig/network-config && cp /tmp/netconfig/network-config $netCfg || {
+          echo "($(date +%T)) ERROR: /tmp/netconfig/network-config file not found (netconfigErr = 1)"
+          netconfigErr=1
         }
 
+        echo "($(date +%T)) Unmounting /tmp/netconfig/"
+        umount /tmp/netconfig
+        echo "($(date +%T)) Removing /tmp/netconfig"
+        rmdir /tmp/netconfig
+      }
 
-        # Associate interface with config-map entries based on index id
-        dataVlanMac="dataVlanMac*"
-        for n in ${!config[@]}; do
-          if [[ ! $n =~ $dataVlanMac ]]; then continue; fi
-          # get the index id
-          id=${n: -1}
-          vlan_mac=$(echo ${config[$n]} | tr -d ':.' | tr [:upper:] [:lower:])
-          test $DEBUG && echo "($(date +%T)) Processing dataVlanMac: $n (vlan_mac: $vlan_mac)"
+      # Configure data-plane networking from network-config file
+      function create_dataplane_from_netconfig() {
+        while read line; do
+          # extract the interface, vlan, and ip address
+          read -r iface vlanName ipAddr <<< $line
 
-          # Create the mac-address to index mapping
-          for i in ${!interfaces[@]}; do
-            imac=$(echo ${interfaces[$i]} | tr -d ':.' | tr [:upper:] [:lower:])
-            test $DEBUG && echo "($(date +%T)) interface: $i, mac: $imac"
-            if [[ ${imac#0} =~ ${vlan_mac#0} ]]; then
-              test $DEBUG && echo "($(date +%T)) Associating interface $i (mac: $imac) with index $id (${config[dataVlanMac\${id}]})"
-              mac_map[${imac}]=\${id}
-              break
+          # skip the mgmt interface
+          [[ $iface =~ "mgmt" ]] && continue
+          # skip any network routes
+          [[ $iface =~ "route" ]] && continue
+
+          # IPv6 networking has not yet been enabled, so skip entries with an empty ipAddr variable
+          [[ -z $ipAddr ]] && continue
+
+          # Generate the vlan tag
+          num=$(echo $iface | cut -d. -f2)
+          vlanTag=$((vlanStart + $num))
+
+          # Create the vlan if the interface is present
+          tmsh show net interface $iface >/dev/null
+          if [[ $? == 0 ]]; then
+            tmsh list net vlan $vlanName >/dev/null 2>&1
+            if [[ $? != 0 ]]; then
+              # vlan does not exist, so create it
+              echo "($(date +%T)) Creating vlan '$vlanName' (tag: $vlanTag) and assigning interface '$iface'"
+              test $DEBUG && echo "tmsh create net vlan $vlanName tag $vlanTag interfaces add { $iface { untagged }}"
+              tmsh create net vlan $vlanName tag $vlanTag interfaces add { $iface { untagged }}
             fi
-          done
-        done
 
-        # Now create the configuration using the interface and the mapped index
-        for n in ${!interfaces[@]}; do
-          iface=$n
-          mac=$(echo ${interfaces[$n]} | tr -d ':.' | tr [:upper:] [:lower:])
+            # Create the self-ip
+            echo "($(date +%T)) Creating self-ip $ipAddr in vlan $vlanName"
+            test $DEBUG && echo "tmsh create net self $ipAddr vlan $vlanName"
+            tmsh create net self $ipAddr vlan $vlanName
 
-          # Make sure this mac exists in the mac_map array
-          if [[ ${mac_map[$mac]} == "" ]]; then continue; fi
-          id=${mac_map[$mac]}
-          vlanAddr=${config[dataVlanAddr\${id}]}
-          vlanCidr=${config[dataVlanCidr\${id}]}
-          vlanMac=${config[dataVlanMac\${id}]}
+            # Confirm that the address was created successfully
+            if [[ $? != 0 ]]; then
+              echo "($(date +%T)) Error: Creation of self-ip $ipAddr in vlan $vlanName failed."
+            fi
 
-          # Define vlan name if none provided
-          if [[ -n ${config[dataVlanName\${id}]} ]]; then
-            vlanName=${config[dataVlanName\${id}]}
+            # Enable management access to first vlan
+            if [[ $iface == "1.1" ]]; then
+              echo "($(date +%T)) Enabling managmenet access to $ipAddr on vlan $vlanName"
+              test $DEBUG && echo "tmsh modify net self $ipAddr allow-service add { tcp:22 tcp:443 }"
+              tmsh modify net self $ipAddr allow-service add { tcp:22 tcp:443 }
+            fi
           else
-            vlanName=$(printf "vlan%03d" $id)
+            echo "($(date +%T)) ERROR: Interface '$iface' does not exist"
           fi
-
-          # Define vlan name if none provided
-          if [[ -n ${config[dataVlanTag\${id}]} ]]; then
-            vlanTag=${config[dataVlanTag\${id}]}
-          else
-            vlanTag=$((4000 + $id))
-          fi
-
-
-          # Create the vlan
-          echo "($(date +%T)) Creating vlan $vlanName (tag: $vlanTag) with interface '$iface'"
-          test $DEBUG && echo "tmsh create net vlan $vlanName tag $vlanTag interfaces add { $iface }"
-          tmsh create net vlan $vlanName tag $vlanTag interfaces add { $iface }
-
-          # Create the self-ip for that vlan
-          echo "($(date +%T)) Create self-IP '$vlanAddr' and assigning to vlan '$vlanName'"
-          test $DEBUG && echo "tmsh create net self ${vlanAddr}/${vlanCidr} vlan $vlanName"
-          tmsh create net self ${vlanAddr}/${vlanCidr} vlan $vlanName
-        done
+        done < <(awk '/^#/ { print $2,$3,$4 }' $netCfg)
       }
-
-      # create vlans based on interface order
-      function create_dataplane_by_order() {
-        nics=$(tmsh show net interface | awk '/^1/ { print $1 }' | cut -d. -f2)
-
-        for n in $nics; do
-          if [[ $n == 0 ]]; then continue; fi
-
-          # Define vlan name if none provided
-          if [[ -n ${config[dataVlanName\${n}]} ]]; then
-            vlanName=${config[dataVlanName\${n}]}
-          else
-            vlanName=$(printf "vlan%04d" $n)
-          fi
-
-          # Define vlan tag if none provided
-          if [[ -n ${config[dataVlanTag\${n}]} ]]; then
-            vlanTag=${config[dataVlanTag\${n}]}
-          else
-            vlanTag=$((4000 + $n))
-          fi
-
-          echo "Assigning interface 1.$n to vlan $vlanName (tag: $vlanTag)"
-          test $DEBUG && echo "tmsh create net vlan $vlanName tag $vlanTag interfaces add { 1.$n }"
-          tmsh create net vlan $vlanName tag $vlanTag interfaces add { 1.$n }
-
-          echo "Assigning self-ip ${config[dataVlanAddr\${n}]} to vlan $vlanName"
-          test $DEBUG && echo "tmsh create net self ${config[dataVlanAddr\${n}]}/${config[dataVlanCidr\${n}]} vlan $vlanName"
-          tmsh create net self ${config[dataVlanAddr\${n}]}/${config[dataVlanCidr\${n}]} vlan $vlanName
-        done
-      }
-
 
 
       # Assign data-plane gateway
       function create_default_route() {
-        if [[ -n ${config[dataGtwy]} ]]; then
-          echo "($(date +%T)) Creating default route"
-          test $DEBUG && echo "tmsh create net route default gw ${config[dataGtwy]}"
-          tmsh create net route default gw ${config[dataGtwy]}
+        # if $netCfg file is present, attempt to assign the default route from it
+        if [[ -f $netCfg ]]; then
+          echo "($(date +%T)) Creating default route from $netCfg"
+          read -r name gateway < <(awk '/0.0.0.0|default/ { print $3,$4 }' $netCfg)
+          if [[ $name == "0.0.0.0" ]]; then name="$name/0"; fi
+
+          if [[ -n $name && -n $gateway ]]; then
+            echo "($(date +%T)) Route found in $netCfg"
+            [[ $DEBUG ]] && echo "tmsh create net route $name gw $gateway"
+            tmsh create net route $name gw $gateway
+          else
+            echo "($(date +%T)) Default route not found in $netCfg, checking for config array"
+
+            if [[ -n ${config[dataGtwy]} ]]; then
+              echo "($(date +%T)) Creating default route"
+              test $DEBUG && echo "tmsh create net route default gw ${config[dataGtwy]}"
+              tmsh create net route default gw ${config[dataGtwy]}
+            fi
+          fi
         fi
       }
       
-      # Enable managment access to first vlan self-ip
-      function enable_mgmt_access() {
-        # Allow SSH and management on first self-ip
-        if [[ ${config[dataVlanAddr1]} ]]; then
-          echo "($(date +%T)) Enabling SSH and HTTPS access to first data-plane IP address"
-          test $DEBUG && echo "tmsh modify net self ${config[dataVlanAddr1]}/${config[dataVlanCidr1]} allow-service add { tcp:443 tcp:${config[sshPort]} }"
-          tmsh modify net self ${config[dataVlanAddr1]}/${config[dataVlanCidr1]} allow-service add { tcp:443 tcp:${config[sshPort]} }
-        fi
-      }
-
-      # Bind eth0 to mlx5_core driver
-      # This is reset every time TMM is restarted, so we will need a better long-term solution
+      ## TODO: Remove 
+      ## Bind eth0 to mlx5_core driver
+      ## This is reset every time TMM is restarted, so we will need a better long-term solution
       function bind_mgmt_interface() {
         # Identify first interface PCI address
         echo "($(date +%T)) Finding first network interface for use with CSN"
         pci_addr="0000:$(lspci | grep -m1 Mellanox | awk '{ print $1 }')"
         echo "($(date +%T)) Found PCI addrss $pci_addr"
-
+        
         # Add driver override entry
         echo "($(date +%T)) Overriding driver for pci: $pci_addr"
         [[ $DEBUG ]] && echo "($(date +%T)) echo mlx5_core > /sys/bus/pci/devices/\${pci_addr}/driver_override"
         echo mlx5_core > /sys/bus/pci/devices/\${pci_addr}/driver_override
-
+        
         # forcibly probe that PCI slot
         echo "($(date +%T)) Probing pci address: $pci_addr"
         [[ $DEBUG ]] && echo "($(date +%T)) echo $pci_addr > /sys/bus/pci/drivers/drivers_probe"
         echo $pci_addr > /sys/bus/pci/drivers_probe
-
+        
         # Add eth0 to mgmt bridge
         echo "($(date +%T)) Adding interface eth0 to mgmt bridge"
         [[ $DEBUG ]] && echo "($(date +%T)) brctl addif mgmt eth0"
         brctl addif mgmt eth0
-
+        
         # Enable interface
         echo "($(date +%T)) Enabling interface eth0"
         [[ $DEBUG ]] && echo "($(date +%T)) ifconfig eth0 up"
         ifconfig eth0 up
       }
-
 
       # Create cli environment file, if defined
       function mk_cli_env() {
@@ -355,48 +351,49 @@ write_files:
       function activate_license() {
         if [[ -n ${config[regKey]} ]]; then
           echo "($(date +%T)) Attempting to activate license: ${config[regKey]}"
-          #if [[ -n ${config[proxyAddr]} && -n ${config[proxyPort]} ]]; then
-          #  echo "($(date +%T)) Running SOAPLicenseClient with proxy: ${config[proxyAddr]}:${config[proxyPort]}"
-          #  test $DEBUG && echo "SOAPLicenseClient --proxy ${config[proxyAddr]}:${config[proxyPort]} --basekey ${config[regKey]}"
-          #  SOAPLicenseClient --proxy ${config[proxyAddr]}:${config[proxyPort]} --basekey ${config[regKey]}
-          #else
-          #  echo "($(date +%T)) Running SOAPLicenseClient"
-            test $DEBUG && echo "SOAPLicenseClient --basekey ${config[regKey]}"
-            SOAPLicenseClient --verbose --basekey ${config[regKey]}
+          test $DEBUG && echo "Running SOAPLicenseClient --basekey ${config[regKey]}"
+          SOAPLicenseClient --verbose --basekey ${config[regKey]}
+          if [[ $? != 0 ]]; then
+            echo "($(date +%T)) Error: License activation failed using regkey: ${config[regKey]}"
           fi
         else
           echo "($(date +%T)) No Registration key defined, skipping license activation"
         fi
       }
 
+      # update /config/startup fild
+      function update_startup() {
+        echo "($(date +%T)) Updating /config/startup to call /shared/reload_license.bash"
+        chmod +w /config/startup
+        echo 'shared/reload_license.bash' >> /config/startup
+      }
+
+
       ###
       ### Main
       ###
 
-      # Source bigip ready functions
-      source /usr/lib/bigstart/bigip-ready-functions
       # Wait for bigip to be ready to execute
       echo "($(date +%T)) Waiting for BIG-IP to reach ready state"
       wait_bigip_ready
       echo "($(date +%T)) wait_bigip_ready() returned, proceeding with configuration"
+
+      # Create to store cloud-init components
+      create_ci_dir
+
+      # Get data-plane network configuration
+      get_netconfig
       
       update_global
       assign_mgmt_addr
       inject_pubkey
       mk_cli_env
 
-      # If interface mac-addresses were provided in config-map, assign interfaces to vlans
-      # based on their mac address. Otherwise, assign interfaces based on presentation order.
-      if [[ ${config[dataVlanMac1]} ]]; then
-        echo "($(date +%T)) Found 'dataVlanMac1', assigning interfaces to vlans by mac-address"
-        create_dataplane_by_mac
-      else
-        echo "($(date +%T)) 'dataVlanMac1' not found, assigning interfaces to vlans by presentation order"
-        create_dataplane_by_order
-      fi
+      # Create the data-plane networking
+      create_dataplane_from_netconfig
 
+      # Create the default route
       create_default_route
-      enable_mgmt_access
 
       # Save configuration
       echo "($(date +%T)) Saving configuration"
@@ -406,8 +403,10 @@ write_files:
       echo "($(date +%T)) Rebinding eth0 to mlx5_core and restarting chmand"
       /shared/rebind_eth0_driver
 
+      update_startup
+
       # Activate license
-      activate_license
+      #activate_license
 
 runcmd:
   - /shared/cloud_init.bash &

@@ -1,0 +1,29 @@
+#! /bin/bash
+
+driver="mlx5_core"
+
+pci_addr=$(lspci | grep -m1 Mellanox | awk '{ print "0000:"$1 }')
+pci_path="/sys/bus/pci/devices/${pci_addr}"
+
+
+# Add driver override entry
+if [[ -d $pci_path ]]; then
+  echo "Writing driver to ${pci_path}/driver_override"
+  echo mlx5_core > ${pci_path}/driver_override
+else
+  echo "ERROR: PCI device path ($pci_path) not found. Exiting..."
+  exit 1
+fi
+
+# forcibly probe that PCI slot
+echo "Forcing driver probe of $pci_addr"
+echo "$pci_addr" > /sys/bus/pci/drivers_probe
+
+# Enable eth0 interface
+echo "Enabling eth0 interface"
+ifconfig eth0 up
+
+# Add eth0 to mgmt bridge
+echo "Adding eth0 to 'mgmt' bridge"
+brctl addif mgmt eth0
+

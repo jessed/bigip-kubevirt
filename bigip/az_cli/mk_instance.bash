@@ -14,8 +14,11 @@ fi
 instance_vars=$1
 common_vars="v_common_bigip.txt"
 aods_vars="v_aods.txt"
-aods_vm_base="v_vm-template.txt"
-ci_template="v_cloud-init.template"
+#aods_vm_base="v_vm.template"
+aods_vm_base="v_vm-static.template"
+network_cfg="v_netconfig.txt"
+ci_template="v_cloud_init.template"
+#ci_template="att_cloud_init.template"
 cloud_init_def=""
 DEBUG=1
 
@@ -34,6 +37,8 @@ mk_cloud_init() {
   # create a decoded copy of the cloud-init for inspection
   [[ $DEBUG ]] && { printf "%s" $cloud_init_b64 | base64 -d > working/ci_data.bash; }
 }
+
+network_data_b64=$(base64 -w0 $network_cfg)
 
 # Create the VM parameters
 mk_vm_parameters() {
