@@ -7,26 +7,23 @@ chpasswd:
   expire: False
 
 write_files:
-  #- path: /config/user_alert.conf
-  #  permissions: 0644
-  #  encoding: b64
-  #  content: ${userAlert}
+  - path: /config/user_alert.conf
+    permissions: 0644
+    encoding: b64
+    content: ${userAlert}
 
-  #- path: /shared/rebind_eth0_driver
-  #  permissions: 0755
-  #  encoding: b64
-  #  content: ${rebindNicDriver}
+  - path: /shared/rebind_eth0_driver
+    permissions: 0755
+    encoding: b64
+    content: ${rebindNicDriver}
 
-  #- path: /config/tmm_init.tcl
-  #  permissions: 0644
-  #  content: |
-  #    device driver vendor_dev 15b3:101e mlxvf5
-  #    #device driver pci 06:00.0 mlxvf5
-  #    #device driver pci 07:00.0 xnet
-  #    #device driver pci 07:00.0 dpdk
-  #    #device driver vendor_dev 15b3:101e xnet
-  #    #ndal rx_devq_sz 512 15b3:101e
-  #    #ndal tx_devq_sz 512 15b3:101e
+  - path: /config/tmm_init.tcl
+    permissions: 0644
+    content: |
+      device driver vendor_dev 15b3:101e mlxvf5
+      ndal rx_devq_sz 512 15b3:101e
+      ndal tx_devq_sz 512 15b3:101e
+      #device driver vendor_dev 15b3:101e xnet
 
   - path: /shared/cloud_init.bash
     permissions: 0755
@@ -57,8 +54,8 @@ write_files:
       config[userAlert]="${userAlert}"
       config[envFile]="${envFile}"
       config[proxyProtocol]="${proxyProtocol}"
-      config[proxyAddr]="${ProxyAddr}"
-      config[proxyPort]="${ProxyPort}"
+      config[proxyAddr]="${proxyAddr}"
+      config[proxyPort]="${proxyPort}"
       # Management (CSN) networking
       config[mgmtAddr]="${csnV4addr}"
       config[mgmtCidr]="${csnV4cidr}"
@@ -88,50 +85,40 @@ write_files:
       ### Functions
       ###
 
-      ## Get BIG-IP configuration elements
-      #function get_ltm_cfg() {
-      #  if [[ -d $ltmInfo ]]; then
-      #    for k in $(ls -1 $ltmInfo); do
-      #      v=$(cat $ltmInfo/$k)
-      #      config[$k]=$v
-      #    done
-      #
-      #    echo "$(date +%T) Successfully sourced $ltmInfo"
-      #    test -f /shared/config-map.txt && rm /shared/config-map.txt
-      #    for k in ${!config[*]}; do
-      #      printf "%20s -> %20s\\n" $k ${config[$k]} >> /shared/config-map.txt
-      #    done
-      #    echo "$(date +%T) config-map contents written to /shared/config-map.txt"
-      #  else
-      #    echo "$(date +%T) ERROR: $ltmInfo not found, CLOUD-INIT VARIABLES UNAVAILABLE"
-      #  fi
-      #}
-
-
       # Configure system global settings
       function update_global() {
         # Disable DHCP if a management-ip was provided in config-map
         if [[ -n ${config[mgmtAddr]} ]]; then
-          echo "$(date +%T) Found mgmtAddr, disabling management DHCP"
+          echo "($(date +%T)) Found management-ip, disabling management DHCP"
           tmsh modify sys global-settings mgmt-dhcp disabled
         fi
 
-        echo "$(date +%T) Setting hostname to '${config[hostname]}'"
+        echo "($(date +%T) )Setting hostname to '${config[hostname]}'"
         tmsh modify sys global-settings hostname ${config[hostname]}
-        echo "$(date +%T) Setting DNS servers to ${config[dnsServers]}"
+        echo "($(date +%T) )Setting DNS servers to ${config[dnsServers]}"
         tmsh modify sys dns name-servers replace-all-with { ${config[dnsServers]} }
-        echo "$(date +%T) Setting timezone to ${config[ntpTimezone]} and NTP servers to ${config[ntpServers]}"
+        echo "($(date +%T) )Setting timezone to ${config[ntpTimezone]} and NTP servers to ${config[ntpServers]}"
         tmsh modify sys ntp servers replace-all-with { ${config[ntpServers]} } timezone ${config[ntpTimezone]}
-        echo "$(date +%T) Updating scp whitelist to include /shared"
+        echo "($(date +%T)) Updating scp whitelist to include /shared"
         echo "/shared" >> /config/ssh/scp.whitelist
         tmsh restart sys service sshd
+
+        # If defined, configure proxy host and port 
+        if [[ -n ${config[proxyAddr]} ]]; then
+          echo "($(date +%T)) Setting proxy.host to ${config[proxyAddr]}"
+          tmsh modify sys db proxy.host value ${config[proxyAddr]}
+        fi
+        if [[ -n ${config[proxyPort]} ]]; then
+          echo "($(date +%T)) Setting proxy.host to ${config[proxyPort]}"
+          tmsh modify sys db proxy.port value ${config[proxyPort]}
+        fi
 
       # If ssh port is not 22, update to the defined value
       if [[ ${config[sshPort]} != 22 ]]; then tmsh modify sys ssh port ${config[sshPort]}; fi
 
 
         if [[ ${config[strictpasswords]} == "disable" ]]; then
-          echo "$(date +%T) Disabling strict password policy"
+          echo "($(date +%T)) Disabling strict password policy"
           tmsh modify sys db users.strictpasswords value ${config[strictpasswords]}
         fi
       }
@@ -140,12 +127,12 @@ write_files:
       function inject_pubkey() {
         if [[ -n ${config[pubKey]} ]]; then
           pubKey=$(printf "%s" ${config[pubKey]} | base64 -d)
-          echo "$(date +%T) Found ssh public key; adding to authorized_keys"
-          echo "$(date +%T) Key: $pubKey"
+          echo "($(date +%T)) Found ssh public key; adding to authorized_keys"
+          echo "($(date +%T)) Key: $pubKey"
           echo "$pubKey" >> /var/ssh/root/authorized_keys
           #echo "$pubKey" >> /home/admin/.ssh/authorized_keys
         else
-          echo "$(date +%T) Skipping SSH public key insertion, config[pubKey] not defined"
+          echo "($(date +%T)) Skipping SSH public key insertion, config[pubKey] not defined"
         fi
       }
 
@@ -153,13 +140,13 @@ write_files:
       function assign_mgmt_addr() {
         # Assign management addr
         if [[ -n ${config[mgmtAddr]} ]]; then
-          echo "$(date +%T) Deleting default/dhcp management-ip"
+          echo "($(date +%T)) Deleting default/dhcp management-ip"
           tmsh delete sys management-ip all
-          echo "$(date +%T) Setting management-ip to ${config[mgmtAddr]}"
+          echo "($(date +%T)) Setting management-ip to ${config[mgmtAddr]}"
           tmsh create sys management-ip ${config[mgmtAddr]}/${config[mgmtCidr]}
         fi
         if [[ -n ${config[mgmtGtwy]} ]]; then
-          echo "$(date +%T) Creating management default-route"
+          echo "($(date +%T)) Creating management default-route"
           tmsh create sys management-route default gateway ${config[mgmtGtwy]}
         fi
       }
@@ -169,14 +156,14 @@ write_files:
         # Find all nics
         nics=$(tmsh show net interface | awk '/^1/ { printf("%s ", $1) }')
 
-        echo "$(date +%T) Beginning interface identification for interfaces: $nics"
+        echo "($(date +%T)) Beginning interface identification for interfaces: $nics"
         # First wait for interfaces to be available in case TMM isn't done initializing
         for n in $nics; do
           # Wait up to 120 seconds for the mac addresses to become populated
           for (( count=0; $count < 120; count++)); do
             mac=$(tmsh show net interface $n all-properties | awk '/^1/ { print tolower($3) }')
             if [[ -n $mac && ! $mac =~ "none"  ]]; then
-              echo "$(date +%T) Found mac address for $n ($mac), adding to interface list"
+              echo "($(date +%T)) Found mac address for $n ($mac), adding to interface list"
               interfaces[${n#0}]=${mac#0}
               break
             else
@@ -184,14 +171,14 @@ write_files:
             fi
           done
           if [[ -z ${interfaces[${n#0}]} ]]; then
-            echo "$(date +%T) ERROR: Failed to find mac-address for interface $n"
+            echo "($(date +%T)) ERROR: Failed to find mac-address for interface $n"
           fi
         done
 
-        echo "$(date +%T) Interface identification complete"
+        echo "($(date +%T)) Interface identification complete"
         test $DEBUG && {
           tmsh show net interface all-properties
-          echo "$(date +%T) Interfaces mapped:"
+          echo "($(date +%T)) Interfaces mapped:"
           for i in ${!interfaces[@]}; do
             echo "$i -> ${interfaces[$i]}"
           done
@@ -205,14 +192,14 @@ write_files:
           # get the index id
           id=${n: -1}
           vlan_mac=$(echo ${config[$n]} | tr -d ':.' | tr [:upper:] [:lower:])
-          test $DEBUG && echo "$(date +%T) Processing dataVlanMac: $n (vlan_mac: $vlan_mac)"
+          test $DEBUG && echo "($(date +%T)) Processing dataVlanMac: $n (vlan_mac: $vlan_mac)"
 
           # Create the mac-address to index mapping
           for i in ${!interfaces[@]}; do
             imac=$(echo ${interfaces[$i]} | tr -d ':.' | tr [:upper:] [:lower:])
-            test $DEBUG && echo "$(date +%T) interface: $i, mac: $imac"
+            test $DEBUG && echo "($(date +%T)) interface: $i, mac: $imac"
             if [[ ${imac#0} =~ ${vlan_mac#0} ]]; then
-              test $DEBUG && echo "$(date +%T) Associating interface $i (mac: $imac) with index $id (${config[dataVlanMac\${id}]})"
+              test $DEBUG && echo "($(date +%T)) Associating interface $i (mac: $imac) with index $id (${config[dataVlanMac\${id}]})"
               mac_map[${imac}]=\${id}
               break
             fi
@@ -247,12 +234,12 @@ write_files:
 
 
           # Create the vlan
-          echo "$(date +%T) Creating vlan $vlanName (tag: $vlanTag) with interface '$iface'"
+          echo "($(date +%T)) Creating vlan $vlanName (tag: $vlanTag) with interface '$iface'"
           test $DEBUG && echo "tmsh create net vlan $vlanName tag $vlanTag interfaces add { $iface }"
           tmsh create net vlan $vlanName tag $vlanTag interfaces add { $iface }
 
           # Create the self-ip for that vlan
-          echo "$(date +%T) Create self-IP '$vlanAddr' and assigning to vlan '$vlanName'"
+          echo "($(date +%T)) Create self-IP '$vlanAddr' and assigning to vlan '$vlanName'"
           test $DEBUG && echo "tmsh create net self ${vlanAddr}/${vlanCidr} vlan $vlanName"
           tmsh create net self ${vlanAddr}/${vlanCidr} vlan $vlanName
         done
@@ -294,7 +281,7 @@ write_files:
       # Assign data-plane gateway
       function create_default_route() {
         if [[ -n ${config[dataGtwy]} ]]; then
-          echo "$(date +%T) Creating default route"
+          echo "($(date +%T)) Creating default route"
           test $DEBUG && echo "tmsh create net route default gw ${config[dataGtwy]}"
           tmsh create net route default gw ${config[dataGtwy]}
         fi
@@ -304,7 +291,7 @@ write_files:
       function enable_mgmt_access() {
         # Allow SSH and management on first self-ip
         if [[ ${config[dataVlanAddr1]} ]]; then
-          echo "$(date +%T) Enabling SSH and HTTPS access to first data-plane IP address"
+          echo "($(date +%T)) Enabling SSH and HTTPS access to first data-plane IP address"
           test $DEBUG && echo "tmsh modify net self ${config[dataVlanAddr1]}/${config[dataVlanCidr1]} allow-service add { tcp:443 tcp:${config[sshPort]} }"
           tmsh modify net self ${config[dataVlanAddr1]}/${config[dataVlanCidr1]} allow-service add { tcp:443 tcp:${config[sshPort]} }
         fi
@@ -314,46 +301,36 @@ write_files:
       # This is reset every time TMM is restarted, so we will need a better long-term solution
       function bind_mgmt_interface() {
         # Identify first interface PCI address
-        echo "$(date +%T) Finding first network interface for use with CSN"
+        echo "($(date +%T)) Finding first network interface for use with CSN"
         pci_addr="0000:$(lspci | grep -m1 Mellanox | awk '{ print $1 }')"
-        echo "$(date +%T) Found PCI addrss $pci_addr"
+        echo "($(date +%T)) Found PCI addrss $pci_addr"
 
         # Add driver override entry
-        echo "$(date +%T) Overriding driver for pci: $pci_addr"
-        [[ $DEBUG ]] && echo "$(date +%T) echo mlx5_core > /sys/bus/pci/devices/\${pci_addr}/driver_override"
+        echo "($(date +%T)) Overriding driver for pci: $pci_addr"
+        [[ $DEBUG ]] && echo "($(date +%T)) echo mlx5_core > /sys/bus/pci/devices/\${pci_addr}/driver_override"
         echo mlx5_core > /sys/bus/pci/devices/\${pci_addr}/driver_override
 
         # forcibly probe that PCI slot
-        echo "$(date +%T) Probing pci address: $pci_addr"
-        [[ $DEBUG ]] && echo "$(date +%T) echo $pci_addr > /sys/bus/pci/drivers/drivers_probe"
+        echo "($(date +%T)) Probing pci address: $pci_addr"
+        [[ $DEBUG ]] && echo "($(date +%T)) echo $pci_addr > /sys/bus/pci/drivers/drivers_probe"
         echo $pci_addr > /sys/bus/pci/drivers_probe
 
         # Add eth0 to mgmt bridge
-        echo "$(date +%T) Adding interface eth0 to mgmt bridge"
-        [[ $DEBUG ]] && echo "$(date +%T) brctl addif mgmt eth0"
+        echo "($(date +%T)) Adding interface eth0 to mgmt bridge"
+        [[ $DEBUG ]] && echo "($(date +%T)) brctl addif mgmt eth0"
         brctl addif mgmt eth0
 
         # Enable interface
-        echo "$(date +%T) Enabling interface eth0"
-        [[ $DEBUG ]] && echo "$(date +%T) ifconfig eth0 up"
+        echo "($(date +%T)) Enabling interface eth0"
+        [[ $DEBUG ]] && echo "($(date +%T)) ifconfig eth0 up"
         ifconfig eth0 up
       }
 
 
-      # Create tmm_init.tcl to associate Mellanox cx6 with cx5 drivers
-      function create_tmm_init() {
-        echo "$(date +%T) Re-mapping ConnectX-6 to the ConnectX-5 driver" 
-        echo 'device driver vendor_dev 15b3:101e mlxvf5' > /config/tmm_init.tcl
-
-        # restart TMM to read the tmm_init.tcl and wait for it to be ready before proceeding
-        tmsh restart sys service tmm
-        wait_bigip_ready
-      }
-
       # Create cli environment file, if defined
       function mk_cli_env() {
         if [[ -n ${config[envFile]} ]]; then
-          echo "$(date +%T) Environment file defined, writing to /shared/env.ltm"
+          echo "($(date +%T)) Environment file defined, writing to /shared/env.ltm"
           echo ${config[envFile]} | base64 -d > /shared/env.ltm
 
           homes="/root /home/admin"
@@ -363,25 +340,32 @@ write_files:
             sed -i  's!^cd /config!#cd /config!' $home/.bash_profile
           done
         else
-          echo "$(date +%T) Environment file undefined, skipping environment customization"
+          echo "($(date +%T)) Environment file undefined, skipping environment customization"
         fi
+      }
+
+      # Restart chmand service - necessary for get_dossier to work (at least for now)
+      function restart_chmand() {
+        echo "($(date +%T)) Restarting chmand"
+        tmsh restart sys service chmand
+        sleep 5
       }
 
       # Apply license
       function activate_license() {
         if [[ -n ${config[regKey]} ]]; then
-          echo "$(date +%T) Attempting to activate license: ${config[regKey]}"
-          if [[ -n ${config[proxyAddr]} && -n ${config[proxyPort]} ]]; then
-            echo "$(data +%T) Running SOAPLicenseClient with proxy: ${config[proxyAddr]}:${config[proxyPort]}"
-            test $DEGUB && echo "SOAPLicenseClient --proxy ${config[proxyAddr]}:${config[proxyPort]} --basekey ${config[regKey]}"
-            SOAPLicenseClient --proxy ${config[proxyAddr]}:${config[proxyPort]} --basekey ${config[regKey]}
-          else
-            echo "$(date +%T) Running SOAPLicenseClient without proxy"
+          echo "($(date +%T)) Attempting to activate license: ${config[regKey]}"
+          #if [[ -n ${config[proxyAddr]} && -n ${config[proxyPort]} ]]; then
+          #  echo "($(date +%T)) Running SOAPLicenseClient with proxy: ${config[proxyAddr]}:${config[proxyPort]}"
+          #  test $DEBUG && echo "SOAPLicenseClient --proxy ${config[proxyAddr]}:${config[proxyPort]} --basekey ${config[regKey]}"
+          #  SOAPLicenseClient --proxy ${config[proxyAddr]}:${config[proxyPort]} --basekey ${config[regKey]}
+          #else
+          #  echo "($(date +%T)) Running SOAPLicenseClient"
             test $DEBUG && echo "SOAPLicenseClient --basekey ${config[regKey]}"
-            SOAPLicenseClient --basekey ${config[regKey]}
+            SOAPLicenseClient --verbose --basekey ${config[regKey]}
           fi
         else
-          echo "$(date +%T) No Registration key defined, skipping license activation"
+          echo "($(date +%T)) No Registration key defined, skipping license activation"
         fi
       }
 
@@ -392,14 +376,10 @@ write_files:
       # Source bigip ready functions
       source /usr/lib/bigstart/bigip-ready-functions
       # Wait for bigip to be ready to execute
-      echo "$(date +%T) Waiting for BIG-IP to reach ready state"
+      echo "($(date +%T)) Waiting for BIG-IP to reach ready state"
       wait_bigip_ready
-      echo "$(date +%T) wait_bigip_ready() returned, proceeding with configuration"
+      echo "($(date +%T)) wait_bigip_ready() returned, proceeding with configuration"
       
-      # Create tmm_init.tcl and restart tmm
-      create_tmm_init
-      tmsh save sys config >/dev/null 2>&1
-
       update_global
       assign_mgmt_addr
       inject_pubkey
@@ -408,10 +388,10 @@ write_files:
       # If interface mac-addresses were provided in config-map, assign interfaces to vlans
       # based on their mac address. Otherwise, assign interfaces based on presentation order.
       if [[ ${config[dataVlanMac1]} ]]; then
-        echo "$(date +%T) Found 'dataVlanMac1', assigning interfaces to vlans by mac-address"
+        echo "($(date +%T)) Found 'dataVlanMac1', assigning interfaces to vlans by mac-address"
         create_dataplane_by_mac
       else
-        echo "$(date +%T) 'dataVlanMac1' not found, assigning interfaces to vlans by presentation order"
+        echo "($(date +%T)) 'dataVlanMac1' not found, assigning interfaces to vlans by presentation order"
         create_dataplane_by_order
       fi
 
@@ -419,16 +399,15 @@ write_files:
       enable_mgmt_access
 
       # Save configuration
-      echo "$(date +%T) Saving configuration"
+      echo "($(date +%T)) Saving configuration"
       tmsh save sys config >/dev/null 2>&1
 
-      # Restart TMM to ensure it reads the /config/tmm_init.tcl
-      #echo "$(date +%T) Restarting TMM"
-      #test $DEBUG && echo "tmsh restart sys service tmm"
-      #tmsh restart sys service tmm
+      # run /shared/rebind_eth0_driver to enable mgmt port
+      echo "($(date +%T)) Rebinding eth0 to mlx5_core and restarting chmand"
+      /shared/rebind_eth0_driver
 
       # Activate license
-      #activate_license
+      activate_license
 
 runcmd:
   - /shared/cloud_init.bash &

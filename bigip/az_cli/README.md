@@ -38,16 +38,27 @@ Unfortunately, some of the architectural choices made by Azure for AODS cause pr
 ## Files
 * mk_instance.bash
   * Wrapper script for AODS VM instantiation
+  * This script sources the variable files below (v_*) and constructs the actual cloud-init script and the full az-cli command necessary to deploy a VE instance.
+  * The deployment command is saved in the az_command.bash file, which should be called with bash just like a script
 * v_aods.txt
   * AODS environment variables
-* v_bigip01.txt
+* v_bigip_common.txt
+  * Variables common to all VE instances
+  * Examples include dns and ntp servers, timezone, passwords, # vcpu, disk size, etc...
+* v_bigip*.txt
   * BIG-IP configuration variables
   * Should be copied to a new file for each VM deployed
-* v_cloud-init.template
+* v_cloud_init.template
   * Cloud-init script template
+* artifacts/
+  * This directoy includes files used to populate some of the variables in the cloud-init template
+  * The file contents are stored as base64 strings in the appropriate variables
+  * Examples include the ssh public key, the /config/user_alert.conf, and the script to rebind the eth0 interface to the mlx5_core driver (to enable the mgmt port)
+* working/
+  * Contains a text version of the cloud-init for review.
 
 ## Operation
-The mk_instance.bash wrapper script sources the v_aods.txt and v_bigip01.txt files to create the variables required for the instance deployment. The *v_cloud-init.template* file contains the actual cloud-init that will be executed on first boot by the cloud-init subsystem on the VE. The cloud-init script is processed by the *mk_instance.bash* wrapper script to insert all necessary variables into the final cloud-init script. This effectively hardcodes them for each instance, but that is required due to AODS limitations (see above).
+The mk_instance.bash wrapper script sources the v_aods.txt and v_bigip01.txt files to create the variables required for the instance deployment. The *v_cloud_init.template* file contains the actual cloud-init that will be executed on first boot by the cloud-init subsystem on the VE. The cloud-init script is processed by the *mk_instance.bash* wrapper script to insert all necessary variables into the final cloud-init script. This effectively hardcodes them for each instance, but that is required due to AODS limitations (see above).
 
 The final output is a file called *az_command.bash*, which contains the command that would be executed (typically by calling the file with bash like a shell script). The actual 'az networkfunction virtualmachine create' command isn't very complex, but embedding the cloud-init into the 'virtual-machine-parameters' argument does make it very large and ungainly to work with directly. There is no technical reason that the *mk_instance.bash* script could not execute the 'az networkfunction virtualmachine create' command directly; sending the command to a file for manual execution just allows for simpler debugging. The script will be updated to call the az command directly at a later point.
 
