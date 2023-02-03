@@ -1,7 +1,7 @@
 # registry and image variables
 export registry="macpro:5000"
 export image="bigip-v1613"
-export version=1
+export version=3
 export containerName="bigip-v1613"
 
 # Always or IfNotPresent
