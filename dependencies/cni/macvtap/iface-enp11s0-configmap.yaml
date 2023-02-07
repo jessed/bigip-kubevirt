@@ -2,6 +2,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: macvtap-macpro-enp11s0
+  namespace: default
+  labels:
+    app.kubernetes.io/component: network
+    app.kubernetes.io/managed-by: cnao-operator
+    networkaddonsoperator.network.kubevirt.io/version: 0.85.0
+    prometheus.cnao.io: "true"
 data:
   DP_MACVTAP_CONF: |
     [
@@ -12,11 +18,3 @@ data:
         "capacity"  : "20"
       }
     ]
-
-# Default configuration exposes all host interfaces
-#apiVersion: v1
-#kind: ConfigMap
-#metadata:
-#  name: macvtap-macpro-enp11s0
-#data:
-#  DP_MACVTAP_CONF: '[]'

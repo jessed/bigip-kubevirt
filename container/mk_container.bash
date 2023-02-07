@@ -3,9 +3,9 @@
 # This script will build the containerized VM using docker or podman (whichever is present).
 # The qcow2 to be containerized should be located in this directory.
 
-image_name="bigip-kv"
-tag="1"
-registry="k83:5000"
+image_name="bigip-v1613"
+tag="3"
+registry="macpro:5000"
 
 ##
 ## Main
@@ -32,7 +32,7 @@ fi
 # Build container
 echo "Building container"
 echo $cmd build -t ${registry}/${name}:${tag}
-$cmd build -t ${registry}/${name}:${tag}
+time $cmd build -t ${registry}/${name}:${tag}
 
 # Log error and exit if a build error occurred
 if [[ $? -ne 0 ]]; then
@@ -46,7 +46,7 @@ fi
 # Push container to registry
 echo "Container build succeeded, pushing image to repository"
 echo $cmd push ${registry}/${name}:${tag}
-$cmd push ${registry}/${name}:${tag}
+time $cmd push ${registry}/${name}:${tag}
 
 # Check for and warn of errors
 if [[ $? -ne 0 ]]; then

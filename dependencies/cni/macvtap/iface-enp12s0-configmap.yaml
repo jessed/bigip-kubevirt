@@ -2,6 +2,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: macvtap-macpro-enp12s0
+  namespace: default
+  labels:
+    app.kubernetes.io/component: network
+    app.kubernetes.io/managed-by: cnao-operator
+    networkaddonsoperator.network.kubevirt.io/version: 0.85.0
+    prometheus.cnao.io: "true"
 data:
   DP_MACVTAP_CONF: |
     [

@@ -1,9 +1,17 @@
+# This operator-cr enables multus and macvtap networking.
+# Deployment is restricted to nodes that match the 'placementConfiguration' and
+# 'affinity' sections
+---
 apiVersion: networkaddonsoperator.network.kubevirt.io/v1
 kind: NetworkAddonsConfig
 metadata:
   name: cluster
 spec:
+  imagePullPolicy: Always
   placementConfiguration:
+    workloads:
+      nodeSelector:
+        node-role.kubernetes.io/worker: ""
     infra:
       affinity:
         nodeAffinity:
@@ -12,7 +20,5 @@ spec:
             - matchExpressions:
               - key: node-role.kubernetes.io/control-plane
                 operator: Exists
-    workloads:
-      nodeSelector:
-        node-role.kubernetes.io/worker: ""
   macvtap: {}
+  multus:  {}

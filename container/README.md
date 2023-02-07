@@ -8,4 +8,5 @@ The mk_container.bash script should be updated with the:
 
 Additional notes:
 - The qcow2 should be suitable for use within KVM/Openshift
-- The image can be from a (shutdown) VM that you have already customized, as well as a base image with no customization.
+- The image can be from a default image, as well as a customized image.
+  - Customized images should be modified without starting (mounting and editing the qcow2 directly), or built with a tool like the (F5 Image Generator)[https://github.com/f5devcentral/f5-bigip-image-generator].

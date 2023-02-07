@@ -1,0 +1,30 @@
+apiVersion: v1
+items:
+- apiVersion: cdi.kubevirt.io/v1beta1
+  kind: CDI
+  metadata:
+    annotations:
+      cdi.kubevirt.io/configAuthority: ""
+    creationTimestamp: "2022-11-28T22:12:32Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2023-02-07T00:28:36Z"
+    finalizers:
+    - operator.cdi.kubevirt.io
+    generation: 27
+    name: cdi
+    resourceVersion: "56834838"
+    uid: c9c1cb2f-fe04-4a78-89a1-0a40bcfb7b93
+  spec:
+    imagePullPolicy: IfNotPresent
+    infra:
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+    workload:
+      nodeSelector:
+        kubernetes.io/os: linux
+kind: List
+metadata:
+  resourceVersion: ""
