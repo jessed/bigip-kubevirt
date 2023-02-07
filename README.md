@@ -19,11 +19,11 @@ This repository contains instructions, tools, and helper-scripts to perform the 
 * dependencies/
   * Kubernetes dependencies to support a BIG-IP container with multiple NICs
   * dependencies/multus
-    * Instructions and helper-script for downloading and installing the Multus CNI [https://github.com/k8snetworkplumbingwg/multus-cni]
+    * Instructions and helper-script for downloading and installing the [Multus CNI](https://github.com/k8snetworkplumbingwg/multus-cni)
   * dependencies/kubevirt
-    * Instructions and helper-script for downloading and installing KubeVirt [https://github.com/kubevirt/kubevirt]
+    * Instructions and helper-script for downloading and installing [KubeVirt](https://github.com/kubevirt/kubevirt)
   * dependencies/cni/CNA
-    * Instructions and helper-script for downloading,installing, and configuring the KubeVirt Cluster Network Addons Operator [https://github.com/kubevirt/cluster-network-addons-operator]
+    * Instructions and helper-script for downloading,installing, and configuring the KubeVirt [Cluster Network Addons Operator](https://github.com/kubevirt/cluster-network-addons-operator)
   * dependencies/cni/macvtap
     * Instructions and helper-script for enabling and configuring macvtap interfaces using the KubeVirt Cluster Network Addons Operator
 
