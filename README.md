@@ -7,7 +7,7 @@ This repository contains instructions, tools, and helper-scripts to perform the 
 * Create a container image for BIG-IP using a VE qcow2 image
 * Deploy a BIG-IP container into Kubernetes using cloud-init for the initial configuration
   * user-data for system configuration
-  * optional: License assignmnet from registration key
+  * optional: License assignment from registration key
   * network-data for interface, vlan, and address assignment
 
 
@@ -29,5 +29,6 @@ This repository contains instructions, tools, and helper-scripts to perform the 
 
 * bigip/
   * mk_pods.bash - Used to create pod yaml to deploy the bigip container into the K8s cluster. Also creates (or recreates) K8s secrets containing the cloud-init user-data and network-data to configure the BIG-IP instance
+  * Includes template files used by the mk_pods.bash script to generate each component.
 
 
