@@ -18,7 +18,7 @@
 ## Example order of operations
 ### First interface (mgmt)
 kubectl create -f iface-enp11s0-configmap.yaml
-kubectl create -f data00-net-attach-def.yaml
+kubectl create -f mgmt-net-attach-def.yaml
 
 ### Additional interfaces (data-plane)
 kubectl create -f iface-enp12s0-configmap.yaml

@@ -6,7 +6,6 @@ URL='https://github.com/kubevirt/cluster-network-addons-operator/releases/downlo
 
 dir=$REL
 files="namespace.yaml network-addons-config.crd.yaml operator.yaml"
-example="network-addons-config-example.cr.yaml"
 
 test -d $REL || { mkdir $REL; }
 
@@ -26,15 +25,8 @@ for f in ${install_files[@]}; do
   echo "kubectl apply -f $dir/$f"
 done
 
-# Download example CR
-wget -q ${URL}/$example -O $dir/$example
-
-if [[ $? == 0 ]]; then
 tee << EOF
-Downloaded example operator CR: $dir/$example
 Deploy the opeator CR after customizing
-An example of a customized operator CR can be found in the examples directory,
-
+An example of a customized operator CR can be found in the examples directory: examples/operator-cr.yaml
 EOF
-fi
 

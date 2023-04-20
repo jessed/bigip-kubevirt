@@ -1,5 +1,16 @@
 #! /bin/bash
 
+dir=$(ls -1d v0*)
+
+if [[ -d $dir ]]; then
+  echo "You should first attempt to delete kubevirt using the operator and cr yaml files in $dir"
+  echo "kubectl delete -f $dir/*-cr.yaml"
+  echo "kubectl delete -f $dir/*-operator.yaml"
+  echo
+  echo "If this approach has already failed, (re)move the directory and run this script again"
+  exit 0
+fi
+
 # the namespace of kubevirt installation
 export namespace=kubevirt
 export labels=("operator.kubevirt.io" "operator.cdi.kubevirt.io" "kubevirt.io" "cdi.kubevirt.io")
@@ -40,6 +51,9 @@ for label in ${labels[@]}; do
     kubectl -n ${i} patch apiservices $name --type=json -p '[{ "op": "remove", "path": "/metadata/finalizers" }]'
   done
 done
+
+# delete priorityclass kubevirt-cluster-critical
+kubectl delete priorityclasses kubevirt-cluster-critical
 
 # original script actions
 #for i in ${namespaces[@]}; do

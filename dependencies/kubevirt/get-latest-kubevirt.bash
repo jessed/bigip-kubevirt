@@ -3,7 +3,7 @@
 # Downloads the 'operator' and 'cr' yaml files necesary to deploy kubevirt
 # for the specified release
 
-REL='v0.58.0'
+REL='v0.59.0'     # March 1st, 2023
 URL='https://github.com/kubevirt/kubevirt/releases/download'
 
 files='kubevirt-operator.yaml kubevirt-cr.yaml'
@@ -24,5 +24,5 @@ done
 
 echo -e "\n\nInstall with:"
 for c in ${install_files[@]}; do
-  echo "kubectl create -f $c"
+  echo "kubectl create -f ${dir}/$c"
 done
