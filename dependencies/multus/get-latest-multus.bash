@@ -7,7 +7,9 @@ git clone --depth 1 ${URL}
 test -f multus-cni/deployments/multus-daemonset-thick.yml && { ln -s multus-cni/deployments/multus-daemonset-thick.yml .; }
 
 if [[ -f multus-cni/deployments/multus-daemonset-thick.yml ]]; then
-  ln -s multus-cni/deployments/multus-daemonset-thick.yml multus-daemonset-thick.yml
+  if [[ ! -f multus-daemonset-thick.yml ]]; then
+    ln -s multus-cni/deployments/multus-daemonset-thick.yml multus-daemonset-thick.yml
+  fi
   echo -e "\n\nInstall with:"
   echo "kubectl create -f multus-daemonset-thick.yml"
 else

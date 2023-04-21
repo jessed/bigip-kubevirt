@@ -12,7 +12,8 @@ pod.yaml
 # dependency installation files
 #dependencies/
 dependencies/cni/CNA/v*/
-dependencies/multus/multus-cni/
+
+dependencies/multus/*/
 dependencies/multus/multus-daemonset-thick.yml
 
 dependencies/kubevirt/v*/
