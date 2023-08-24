@@ -5,9 +5,10 @@ metadata:
   annotations:
     k8s.v1.cni.cncf.io/resourceName: macvtap.network.kubevirt.io/enp12s0
 spec:
-  config: '{
-    "cniVersion"    : "0.4.0",
-    "name"          : "data30",
-    "type"          : "macvtap",
-    "mtu"           : 1500
-  }'
+  config: |
+    {
+      "cniVersion"    : "0.4.0",
+      "name"          : "data30",
+      "type"          : "macvtap",
+      "mtu"           : 1500
+    }

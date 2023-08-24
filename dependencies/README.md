@@ -6,13 +6,13 @@
   * kubevirt/README.md
 
 3. cluster-network-addons
-  * cni/CNA/README.md
+  * cni/README.md
 
 4. Enable the 'macvtap' feature-gate
-  * cni/CNA/README.md
+  * cni/README.md
 
 5. Deploy CNA operator-cr
-  * cni/CNA/README.md
+  * cni/README.md
 
 6. Deploy macvtap config-maps
   * cni/macvtap/README.md
@@ -38,4 +38,4 @@ At this point the cluster should be ready for VMI deployment.
 8) Install latest Cluster-Network-Addons
 9) Redeploy VMI(s)
 
-## Note: Kubevirt doesn't clean up after itself very well and the 'kubevirt' namespace can end up in the Terminating state indefinitely following uninstallation. To work around this issue you may have to use the 'remove_kubevirt.bash' script, which is adapted from this [Github issue thread](https://github.com/kubevirt/kubevirt/issues/1491).
+## Note: Kubevirt doesn't clean up after itself very well and the 'kubevirt' namespace can end up in the Terminating state indefinitely following uninstallation. To work around this issue you may have to use the kubevirt/remove_kubevirt.bash script, which is adapted from this [Github issue thread](https://github.com/kubevirt/kubevirt/issues/1491).
