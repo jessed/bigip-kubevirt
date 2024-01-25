@@ -4,6 +4,10 @@ URL='https://github.com/k8snetworkplumbingwg/multus-cni'
 
 git clone --depth 1 ${URL}
 
+# clean up old symlink
+test -L multus-daemonset-thick.yml && { rm multus-daemonset-thick.yml ; }
+
+# create symlink to new version
 test -f multus-cni/deployments/multus-daemonset-thick.yml && { ln -s multus-cni/deployments/multus-daemonset-thick.yml .; }
 
 if [[ -f multus-cni/deployments/multus-daemonset-thick.yml ]]; then

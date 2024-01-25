@@ -1,6 +1,6 @@
 #! /bin/bash
 
-REL="v0.85.0"
+REL="v0.91.0"
 URL='https://github.com/kubevirt/cluster-network-addons-operator/releases/download'
 
 

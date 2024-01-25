@@ -3,7 +3,8 @@
 # Downloads the 'operator' and 'cr' yaml files necesary to deploy kubevirt
 # for the specified release
 
-REL='v0.59.0'     # March 1st, 2023
+#REL='v0.59.0'     # March 1st, 2023
+REL='v1.1.1'      # December 25th, 2023
 URL='https://github.com/kubevirt/kubevirt/releases/download'
 
 files='kubevirt-operator.yaml kubevirt-cr.yaml'
